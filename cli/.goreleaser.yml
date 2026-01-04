@@ -44,7 +44,7 @@ changelog:
 release:
   github:
     owner: VinMeld
-    name: leetcode-sr-cli
+    name: leetcode-space-repition
   draft: false
   prerelease: auto
 
@@ -55,7 +55,7 @@ brews:
       owner: VinMeld
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/VinMeld/leetcode-sr-cli"
+    homepage: "https://github.com/VinMeld/leetcode-space-repition"
     description: "CLI for LeetCode Spaced Repetition Tracker"
     license: "MIT"
     install: |
@@ -66,7 +66,7 @@ brews:
 # AUR package (requires AUR_SSH_KEY secret)
 aurs:
   - name: leetcode-sr-bin
-    homepage: "https://github.com/VinMeld/leetcode-sr-cli"
+    homepage: "https://github.com/VinMeld/leetcode-space-repition"
     description: "CLI for LeetCode Spaced Repetition Tracker"
     maintainers:
       - "VinMeld"
