@@ -53,7 +53,7 @@ export const Dashboard: React.FC = () => {
             await reviewProblem.mutateAsync({ problemId, quality });
             const qualityMessage = quality >= 3 ? 'Great job!' : 'Keep practicing!';
             toast.success(`Review recorded. ${qualityMessage}`);
-        } catch (error) {
+        } catch {
             toast.error('Failed to record review');
         } finally {
             setReviewingProblem(null);
@@ -66,7 +66,7 @@ export const Dashboard: React.FC = () => {
         try {
             await deleteProblem.mutateAsync(problemId);
             toast.success('Problem deleted');
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete problem');
         }
     };
