@@ -1,0 +1,12 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.crx
+*.pem
+*.zip

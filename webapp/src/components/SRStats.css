@@ -1,0 +1,103 @@
+.sr-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.sr-stats-section {
+    margin-bottom: var(--space-2);
+}
+
+.sr-stats-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.sr-stats-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+}
+
+.difficulty-chart {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+}
+
+.difficulty-bar {
+    display: flex;
+    height: 24px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-5);
+}
+
+.difficulty-bar-segment {
+    height: 100%;
+    transition: width var(--transition-slow);
+}
+
+.difficulty-easy {
+    background: linear-gradient(90deg, #00b8a3 0%, #00d9c0 100%);
+}
+
+.difficulty-medium {
+    background: linear-gradient(90deg, #ffc01e 0%, #ffcf50 100%);
+}
+
+.difficulty-hard {
+    background: linear-gradient(90deg, #ff375f 0%, #ff6b87 100%);
+}
+
+.difficulty-legend {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.difficulty-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.difficulty-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+}
+
+.difficulty-dot-easy {
+    background: var(--color-easy);
+}
+
+.difficulty-dot-medium {
+    background: var(--color-medium);
+}
+
+.difficulty-dot-hard {
+    background: var(--color-hard);
+}
+
+.difficulty-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.difficulty-count {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.difficulty-percent {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}

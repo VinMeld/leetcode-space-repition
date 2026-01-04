@@ -1,0 +1,77 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+project_name: leetcode-sr
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: leetcode-sr
+    main: ./cmd/leetcode-sr
+    binary: leetcode-sr
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: VinMeld
+    name: leetcode-sr-cli
+  draft: false
+  prerelease: auto
+
+# Homebrew tap (requires HOMEBREW_TAP_TOKEN secret)
+brews:
+  - name: leetcode-sr
+    repository:
+      owner: VinMeld
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/VinMeld/leetcode-sr-cli"
+    description: "CLI for LeetCode Spaced Repetition Tracker"
+    license: "MIT"
+    install: |
+      bin.install "leetcode-sr"
+    test: |
+      system "#{bin}/leetcode-sr", "--version"
+
+# AUR package (requires AUR_SSH_KEY secret)
+aurs:
+  - name: leetcode-sr-bin
+    homepage: "https://github.com/VinMeld/leetcode-sr-cli"
+    description: "CLI for LeetCode Spaced Repetition Tracker"
+    maintainers:
+      - "VinMeld"
+    license: "MIT"
+    private_key: "{{ .Env.AUR_SSH_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/leetcode-sr-bin.git"
+    package: |
+      install -Dm755 "./leetcode-sr" "${pkgdir}/usr/bin/leetcode-sr"

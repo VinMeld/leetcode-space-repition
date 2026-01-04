@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Test and lint Go CLI
+  cli:
+    name: CLI - Test and Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          check-latest: true
+          cache: true
+          cache-dependency-path: cli/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run Unit Tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Check coverage
+        run: |
+          COVERAGE=$(go tool cover -func coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "Coverage is below 60%"
+            exit 1
+          fi
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: cli
+
+      - name: Run govulncheck
+        continue-on-error: true
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Build CLI
+        run: go build -v -o leetcode-sr ./cmd/leetcode-sr
+
+  # Test and build webapp
+  webapp:
+    name: Webapp - Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+  # Validate extension manifest
+  extension:
+    name: Extension - Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest.json
+        run: |
+          if ! python3 -c "import json; json.load(open('extension/manifest.json'))"; then
+            echo "Invalid manifest.json"
+            exit 1
+          fi
+          echo "manifest.json is valid JSON"

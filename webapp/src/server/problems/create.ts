@@ -1,0 +1,49 @@
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { db } from '../../helpers/db';
+import { Difficulty } from '../../helpers/schema';
+
+const createProblemSchema = z.object({
+    title: z.string().min(1).max(255),
+    leetcodeUrl: z.string().url(),
+    difficulty: z.enum(['easy', 'medium', 'hard']),
+    notes: z.string().optional(),
+});
+
+export async function createProblem(req: Request, res: Response) {
+    try {
+        const validation = createProblemSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                error: 'Invalid input',
+                details: validation.error.errors
+            });
+        }
+
+        const { title, leetcodeUrl, difficulty, notes } = validation.data;
+
+        const result = await db
+            .insertInto('problems')
+            .values({
+                title,
+                leetcode_url: leetcodeUrl,
+                difficulty: difficulty as Difficulty,
+                notes: notes || null,
+                easiness_factor: 2.5,
+                interval: 0,
+                repetitions: 0,
+                next_review_date: new Date(),
+            })
+            .returning(['id', 'title', 'created_at'])
+            .executeTakeFirst();
+
+        res.status(201).json({
+            success: true,
+            problem: result
+        });
+    } catch (error) {
+        console.error('Error creating problem:', error);
+        res.status(500).json({ error: 'Failed to create problem' });
+    }
+}

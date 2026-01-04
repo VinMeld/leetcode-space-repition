@@ -1,0 +1,43 @@
+services:
+  # PostgreSQL database
+  db:
+    image: postgres:16-alpine
+    container_name: leetcode-sr-db
+    environment:
+      POSTGRES_USER: leetcode
+      POSTGRES_PASSWORD: leetcode_dev
+      POSTGRES_DB: leetcode_sr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U leetcode -d leetcode_sr" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Webapp API server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leetcode-sr-api
+    environment:
+      DATABASE_URL: postgresql://leetcode:leetcode_dev@db:5432/leetcode_sr
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  postgres_data:

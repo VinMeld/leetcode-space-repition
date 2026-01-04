@@ -1,0 +1,59 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-full);
+    text-transform: capitalize;
+}
+
+.badge-sm {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+}
+
+.badge-md {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
+}
+
+.badge-default {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+}
+
+.badge-easy {
+    background: rgba(0, 184, 163, 0.15);
+    color: var(--color-easy);
+    border: 1px solid rgba(0, 184, 163, 0.3);
+}
+
+.badge-medium {
+    background: rgba(255, 192, 30, 0.15);
+    color: var(--color-medium);
+    border: 1px solid rgba(255, 192, 30, 0.3);
+}
+
+.badge-hard {
+    background: rgba(255, 55, 95, 0.15);
+    color: var(--color-hard);
+    border: 1px solid rgba(255, 55, 95, 0.3);
+}
+
+.badge-success {
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--color-accent-success);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.badge-warning {
+    background: rgba(210, 153, 34, 0.15);
+    color: var(--color-accent-warning);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.badge-danger {
+    background: rgba(248, 81, 73, 0.15);
+    color: var(--color-accent-danger);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}

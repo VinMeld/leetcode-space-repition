@@ -1,0 +1,131 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Sizes */
+.btn-sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
+    height: 32px;
+}
+
+.btn-md {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-base);
+    height: 40px;
+}
+
+.btn-lg {
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--font-size-lg);
+    height: 48px;
+}
+
+/* Variants */
+.btn-primary {
+    background: linear-gradient(135deg, #58a6ff 0%, #388bfd 100%);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #79b8ff 0%, #58a6ff 100%);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-text-muted);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f85149 0%, #da3633 100%);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff6b6b 0%, #f85149 100%);
+    transform: translateY(-1px);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #3fb950 0%, #2ea043 100%);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #56d364 0%, #3fb950 100%);
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.btn-loading .btn-text {
+    opacity: 0;
+}
+
+.btn-spinner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+}
+
+.btn-spinner svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Icons */
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon svg {
+    width: 18px;
+    height: 18px;
+}

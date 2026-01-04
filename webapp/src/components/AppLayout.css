@@ -1,0 +1,61 @@
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.app-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.app-logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, #388bfd 100%);
+    border-radius: var(--radius-lg);
+    color: white;
+}
+
+.app-logo-text h1 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    line-height: 1.2;
+}
+
+.app-logo-text span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.app-main {
+    flex: 1;
+    padding: var(--space-6);
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
