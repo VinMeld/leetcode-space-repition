@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../../helpers/db';
 import { calculateSM2 } from '../../lib/sm2';

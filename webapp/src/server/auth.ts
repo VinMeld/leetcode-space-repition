@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { createHash, randomBytes } from 'crypto';
 import { db } from '../helpers/db';
 

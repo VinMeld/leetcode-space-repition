@@ -1,8 +1,6 @@
 import { Kysely, PostgresDialect } from 'kysely';
-import pg from 'pg';
-import { Database } from './schema';
-
-const { Pool } = pg;
+import { Pool } from 'pg';
+import type { Database } from './schema';
 
 // Create a database connection pool
 const pool = new Pool({

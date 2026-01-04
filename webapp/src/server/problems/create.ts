@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../../helpers/db';
-import { Difficulty } from '../../helpers/schema';
+import type { Difficulty } from '../../helpers/schema';
 
 const createProblemSchema = z.object({
     title: z.string().min(1).max(255),

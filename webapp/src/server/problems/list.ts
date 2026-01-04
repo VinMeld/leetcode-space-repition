@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { db } from '../../helpers/db';
 import { isDueToday } from '../../lib/sm2';
 import superjson from 'superjson';
