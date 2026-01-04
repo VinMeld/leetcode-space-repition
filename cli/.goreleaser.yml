@@ -29,6 +29,16 @@ archives:
       - goos: windows
         format: zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - id: archlinux
+    format: tar.zst
+    builds:
+      - leetcode-sr
+    files:
+      - none*
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    filters:
+      goos:
+        - linux
 
 checksum:
   name_template: "checksums.txt"
