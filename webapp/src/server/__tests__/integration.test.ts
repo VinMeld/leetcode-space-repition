@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { Kysely, PostgresDialect } from 'kysely';
-import superjson from 'superjson';
-import type { Database } from '../../helpers/schema';
 
 /**
  * Integration Tests - Full Request/Response Cycle
@@ -21,10 +18,10 @@ import type { Database } from '../../helpers/schema';
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL ||
     'postgresql://leetcode_test:test_password@localhost:5433/leetcode_sr_test';
 
-let testDb: Kysely<Database>;
 let pool: Pool;
 
 // Dynamic import of app to allow mocking DATABASE_URL
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let app: any;
 
 describe('Integration Tests - Full Request/Response Cycle', () => {
@@ -34,45 +31,42 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
         // Create database connection
         pool = new Pool({ connectionString: TEST_DATABASE_URL });
-        testDb = new Kysely<Database>({
-            dialect: new PostgresDialect({ pool }),
-        });
 
         // Run migrations to set up schema
         try {
             await pool.query(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    provider VARCHAR(50) NOT NULL,
-                    provider_id VARCHAR(255) NOT NULL,
-                    display_name VARCHAR(255),
-                    password_hash VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT NOW()
-                );
+                CREATE TABLE IF NOT EXISTS users(
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    provider VARCHAR(50) NOT NULL,
+    provider_id VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255),
+    password_hash VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW()
+);
                 
-                CREATE TABLE IF NOT EXISTS problems (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    title VARCHAR(255) NOT NULL,
-                    leetcode_url VARCHAR(500) NOT NULL,
-                    difficulty VARCHAR(20) NOT NULL,
-                    notes TEXT,
-                    easiness_factor DECIMAL(4,2) DEFAULT 2.5,
-                    interval INTEGER DEFAULT 1,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review_date DATE DEFAULT CURRENT_DATE,
-                    last_reviewed_at TIMESTAMP,
-                    created_at TIMESTAMP DEFAULT NOW()
-                );
+                CREATE TABLE IF NOT EXISTS problems(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    title VARCHAR(255) NOT NULL,
+    leetcode_url VARCHAR(500) NOT NULL,
+    difficulty VARCHAR(20) NOT NULL,
+    notes TEXT,
+    easiness_factor DECIMAL(4, 2) DEFAULT 2.5,
+    interval INTEGER DEFAULT 1,
+    repetitions INTEGER DEFAULT 0,
+    next_review_date DATE DEFAULT CURRENT_DATE,
+    last_reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
                 
-                CREATE TABLE IF NOT EXISTS reviews (
-                    id SERIAL PRIMARY KEY,
-                    problem_id INTEGER REFERENCES problems(id),
-                    quality INTEGER NOT NULL,
-                    reviewed_at TIMESTAMP DEFAULT NOW()
-                );
-            `);
+                CREATE TABLE IF NOT EXISTS reviews(
+    id SERIAL PRIMARY KEY,
+    problem_id INTEGER REFERENCES problems(id),
+    quality INTEGER NOT NULL,
+    reviewed_at TIMESTAMP DEFAULT NOW()
+);
+`);
         } catch (error) {
             console.error('Migration error (might already exist):', error);
         }
@@ -190,7 +184,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
         it('should create a problem', async () => {
             const response = await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'Two Sum',
                     leetcodeUrl: 'https://leetcode.com/problems/two-sum',
@@ -208,7 +202,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Create a problem first
             await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'Two Sum',
                     leetcodeUrl: 'https://leetcode.com/problems/two-sum',
@@ -217,21 +211,46 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
             const response = await request(app)
                 .get('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`);
+                .set('Authorization', `Bearer ${authToken} `);
 
             expect(response.status).toBe(200);
             // Use plain JSON response
-            const problems = response.body as any[];
+            const problems = response.body as unknown[];
             expect(Array.isArray(problems)).toBe(true);
             expect(problems.length).toBe(1);
             expect(problems[0].title).toBe('Two Sum');
+        });
+
+        it('should prevent creating duplicate problems', async () => {
+            // First creation
+            await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Duplicate Test',
+                    leetcodeUrl: 'https://leetcode.com/problems/duplicate-test',
+                    difficulty: 'medium',
+                });
+
+            // Second creation (should fail)
+            const response = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Duplicate Test',
+                    leetcodeUrl: 'https://leetcode.com/problems/duplicate-test',
+                    difficulty: 'medium',
+                });
+
+            expect(response.status).toBe(409);
+            expect(response.body.error).toContain('already exists');
         });
 
         it('should review a problem and update spaced repetition values', async () => {
             // Create a problem
             const createResponse = await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'Two Sum',
                     leetcodeUrl: 'https://leetcode.com/problems/two-sum',
@@ -241,7 +260,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Review the problem
             const reviewResponse = await request(app)
                 .post('/api/problems/review')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     problemId: createResponse.body.problem.id,
                     quality: 4,
@@ -253,9 +272,9 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Verify problem was updated
             const listResponse = await request(app)
                 .get('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`);
+                .set('Authorization', `Bearer ${authToken} `);
 
-            const problems = listResponse.body as any[];
+            const problems = listResponse.body as { repetitions: number }[];
             const updatedProblem = problems[0];
             expect(updatedProblem.repetitions).toBeGreaterThan(0);
         });
@@ -264,7 +283,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Create a problem
             const createResponse = await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'To Delete',
                     leetcodeUrl: 'https://leetcode.com/problems/to-delete',
@@ -274,7 +293,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Delete the problem
             const deleteResponse = await request(app)
                 .post('/api/problems/delete')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     problemId: createResponse.body.problem.id,
                 });
@@ -285,9 +304,9 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Verify it's gone
             const listResponse = await request(app)
                 .get('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`);
+                .set('Authorization', `Bearer ${authToken} `);
 
-            const problems = listResponse.body as any[];
+            const problems = listResponse.body as { repetitions: number }[];
             expect(problems.length).toBe(0);
         });
     });
@@ -309,7 +328,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // Create some problems
             await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'Easy Problem',
                     leetcodeUrl: 'https://leetcode.com/problems/easy',
@@ -318,7 +337,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
             await request(app)
                 .post('/api/problems')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken} `)
                 .send({
                     title: 'Hard Problem',
                     leetcodeUrl: 'https://leetcode.com/problems/hard',
@@ -327,11 +346,11 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
             const response = await request(app)
                 .get('/api/stats')
-                .set('Authorization', `Bearer ${authToken}`);
+                .set('Authorization', `Bearer ${authToken} `);
 
             expect(response.status).toBe(200);
             // Use plain JSON response
-            const stats = response.body as any;
+            const stats = response.body as { totalProblems: number; problemsByDifficulty: { easy: number; hard: number } };
             expect(stats.totalProblems).toBe(2);
             expect(stats.problemsByDifficulty.easy).toBe(1);
             expect(stats.problemsByDifficulty.hard).toBe(1);

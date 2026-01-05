@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "LeetCode SR Tracker",
     "description": "Add LeetCode and NeetCode problems to your spaced repetition tracker with keyboard shortcuts",
-    "version": "1.0.0",
+    "version": "2.1.0",
     "permissions": [
         "activeTab",
         "storage"

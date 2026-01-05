@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import { db } from '../helpers/db';
-import type { NewUser } from '../helpers/schema';
+import type { NewUser, User } from '../helpers/schema';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
@@ -11,15 +11,16 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
 const API_URL = process.env.API_URL || 'http://localhost:3001';
 
 // Serialize user to session (we might not use sessions if using JWTs, but passport needs it)
-passport.serializeUser((user: any, done) => {
+passport.serializeUser((user: User, done) => {
     done(null, user);
 });
 
-passport.deserializeUser((user: any, done) => {
+passport.deserializeUser((user: User, done) => {
     done(null, user);
 });
 
-async function findOrCreateUser(profile: any, provider: 'google' | 'github') {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function findOrCreateUser(profile: any, provider: 'google' | 'github'): Promise<User> {
     const email = profile.emails?.[0]?.value;
     const providerId = profile.id;
     const displayName = profile.displayName || profile.username;
@@ -80,6 +81,7 @@ if (GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET) {
         clientSecret: GITHUB_CLIENT_SECRET,
         callbackURL: `${API_URL}/api/auth/github/callback`,
         scope: ['user:email'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }, async (_accessToken: string, _refreshToken: string, profile: any, done: any) => {
         try {
             const user = await findOrCreateUser(profile, 'github');

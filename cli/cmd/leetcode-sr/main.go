@@ -15,7 +15,7 @@ import (
 	"github.com/vinmeld/leetcode-sr-cli/internal/tui"
 )
 
-const version = "1.0.0"
+const version = "2.1.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -40,6 +40,12 @@ func main() {
 		cmdStats()
 	case "review":
 		cmdReview()
+	case "import":
+		if len(os.Args) < 3 {
+			tui.PrintError("Usage: leetcode-sr import <source>")
+			return
+		}
+		cmdImport(os.Args[2])
 	case "version", "-v", "--version":
 		fmt.Printf("leetcode-sr version %s\n", version)
 	case "help", "-h", "--help":

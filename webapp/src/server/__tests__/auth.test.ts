@@ -27,8 +27,8 @@ vi.mock('bcryptjs', () => ({
 // Mock passport
 vi.mock('../auth-passport', () => ({
     default: {
-        initialize: () => (req: any, res: any, next: any) => next(),
-        authenticate: () => (req: any, res: any, next: any) => next(),
+        initialize: () => (req: unknown, res: unknown, next: () => void) => next(),
+        authenticate: () => (req: unknown, res: unknown, next: () => void) => next(),
     },
 }));
 
@@ -77,7 +77,7 @@ describe('Auth API Endpoints', () => {
         it('should return 400 if user already exists', async () => {
             const { db } = await import('../../helpers/db');
             // Mock that user exists
-            (db.executeTakeFirst as any).mockResolvedValueOnce({ id: 1, email: 'test@example.com' });
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: 1, email: 'test@example.com' });
 
             const response = await request(app)
                 .post('/api/auth/register')
@@ -90,9 +90,9 @@ describe('Auth API Endpoints', () => {
         it('should successfully register a new user', async () => {
             const { db } = await import('../../helpers/db');
             // Mock that user doesn't exist
-            (db.executeTakeFirst as any).mockResolvedValueOnce(null);
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
             // Mock user creation
-            (db.executeTakeFirstOrThrow as any).mockResolvedValueOnce({
+            (db.executeTakeFirstOrThrow as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
                 id: 1,
                 email: 'newuser@example.com',
                 display_name: 'newuser',
@@ -125,7 +125,7 @@ describe('Auth API Endpoints', () => {
 
         it('should return 401 if user not found', async () => {
             const { db } = await import('../../helpers/db');
-            (db.executeTakeFirst as any).mockResolvedValueOnce(null);
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
 
             const response = await request(app)
                 .post('/api/auth/login')
@@ -139,12 +139,12 @@ describe('Auth API Endpoints', () => {
             const { db } = await import('../../helpers/db');
             const bcrypt = await import('bcryptjs');
 
-            (db.executeTakeFirst as any).mockResolvedValueOnce({
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
                 id: 1,
                 email: 'test@example.com',
                 password_hash: 'hashed_password',
             });
-            (bcrypt.default.compare as any).mockResolvedValueOnce(false);
+            (bcrypt.default.compare as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
 
             const response = await request(app)
                 .post('/api/auth/login')
@@ -157,12 +157,12 @@ describe('Auth API Endpoints', () => {
             const { db } = await import('../../helpers/db');
             const bcrypt = await import('bcryptjs');
 
-            (db.executeTakeFirst as any).mockResolvedValueOnce({
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
                 id: 1,
                 email: 'test@example.com',
                 password_hash: 'hashed_password',
             });
-            (bcrypt.default.compare as any).mockResolvedValueOnce(true);
+            (bcrypt.default.compare as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(true);
 
             const response = await request(app)
                 .post('/api/auth/login')

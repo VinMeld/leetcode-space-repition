@@ -12,6 +12,11 @@ const createProblemSchema = z.object({
 
 export async function createProblem(req: Request, res: Response) {
     try {
+        const user = req.user as { id: number } | undefined;
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const validation = createProblemSchema.safeParse(req.body);
 
         if (!validation.success) {
@@ -23,9 +28,25 @@ export async function createProblem(req: Request, res: Response) {
 
         const { title, leetcodeUrl, difficulty, notes } = validation.data;
 
+        // Check for existing problem
+        const existing = await db
+            .selectFrom('problems')
+            .select('id')
+            .where('user_id', '=', user.id)
+            .where('leetcode_url', '=', leetcodeUrl)
+            .executeTakeFirst();
+
+        if (existing) {
+            return res.status(409).json({
+                error: 'Problem already exists',
+                problemId: existing.id
+            });
+        }
+
         const result = await db
             .insertInto('problems')
             .values({
+                user_id: user.id,
                 title,
                 leetcode_url: leetcodeUrl,
                 difficulty: difficulty as Difficulty,
