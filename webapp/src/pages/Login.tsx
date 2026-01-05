@@ -12,23 +12,26 @@ export function Login() {
     const [searchParams] = useSearchParams();
     const from = location.state?.from?.pathname || '/';
     const cliPort = searchParams.get('cli_port');
+    const extension = searchParams.get('extension');
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     if (user) {
+        const token = localStorage.getItem('token');
+
         // If CLI port is present, redirect to CLI local server
-        if (cliPort) {
-            // We need the token here. If user is already logged in, we might need to re-issue or get it from storage.
-            // But verifyToken on backend handles it. 
-            // Actually, if user is already logged in, we should probably just redirect to CLI with the *current* token.
-            const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = `http://localhost:${cliPort}?token=${token}`;
-                return null;
-            }
+        if (cliPort && token) {
+            window.location.href = `http://localhost:${cliPort}?token=${token}`;
+            return null;
         }
+
+        // If extension login, post message
+        if (extension && token) {
+            window.postMessage({ type: 'EXTENSION_LOGIN_SUCCESS', token }, '*');
+        }
+
         return <Navigate to={from} replace />;
     }
 

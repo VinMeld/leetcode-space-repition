@@ -160,12 +160,16 @@
         <input type="url" id="apiUrl" placeholder="http://localhost:3001/api">
     </div>
 
-    <div class="form-group">
-        <label for="apiKey">API Key</label>
-        <input type="password" id="apiKey" placeholder="lcsr_xxxxx...">
+    <!-- Login/Logout Section -->
+    <div id="authSection">
+        <button id="loginBtn">Log In with Webapp</button>
+        <div id="loggedInState" style="display: none;">
+            <p style="font-size: 13px; color: #3fb950; margin-bottom: 8px;">✓ Logged In</p>
+            <button id="logoutBtn" style="background: #21262d; border: 1px solid #30363d;">Log Out</button>
+        </div>
     </div>
 
-    <button id="saveBtn">Save Settings</button>
+    <button id="saveBtn" style="margin-top: 12px; background: #21262d;">Save URL</button>
     <button id="testBtn" style="margin-top: 8px; background: #21262d;">Test Connection</button>
 
     <div id="status" class="status"></div>

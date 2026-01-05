@@ -36,6 +36,14 @@
             "js": [
                 "content.js"
             ]
+        },
+        {
+            "matches": [
+                "http://localhost:5173/*"
+            ],
+            "js": [
+                "auth-content.js"
+            ]
         }
     ],
     "commands": {

@@ -12,7 +12,7 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     loading: boolean;
-    login: (provider: 'google' | 'github') => void;
+    login: (provider: 'google' | 'github', cliPort?: string) => void;
     logout: () => void;
     setToken: (token: string) => void;
 }
@@ -42,9 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
     }, [token]);
 
-    const login = (provider: 'google' | 'github') => {
+    const login = (provider: 'google' | 'github', cliPort?: string) => {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        window.location.href = `${apiUrl}/api/auth/${provider}`;
+        const query = cliPort ? `?cli_port=${cliPort}` : '';
+        window.location.href = `${apiUrl}/api/auth/${provider}${query}`;
     };
 
     const logout = () => {

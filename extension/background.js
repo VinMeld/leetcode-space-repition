@@ -5,26 +5,26 @@ const DEFAULT_API_URL = 'http://localhost:3001/api';
 
 // Get settings from storage
 async function getSettings() {
-    const result = await chrome.storage.sync.get(['apiUrl', 'apiKey']);
+    const result = await chrome.storage.sync.get(['apiUrl', 'token']);
     return {
         apiUrl: result.apiUrl || DEFAULT_API_URL,
-        apiKey: result.apiKey || '',
+        token: result.token || '',
     };
 }
 
 // Make API request
 async function apiRequest(endpoint, method = 'GET', body = null) {
-    const { apiUrl, apiKey } = await getSettings();
+    const { apiUrl, token } = await getSettings();
 
-    if (!apiKey) {
-        throw new Error('API key not configured. Open extension popup to set it.');
+    if (!token) {
+        throw new Error('Not logged in. Open extension popup to login.');
     }
 
     const options = {
         method,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
+            'Authorization': `Bearer ${token}`,
         },
     };
 
@@ -146,5 +146,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .then(data => sendResponse({ success: true, data }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // Keep channel open
+    } else if (request.action === 'saveToken') {
+        chrome.storage.sync.set({ token: request.token }, () => {
+            sendResponse({ success: true });
+            showNotification('Login', 'Successfully logged in!');
+        });
+        return true;
     }
 });
