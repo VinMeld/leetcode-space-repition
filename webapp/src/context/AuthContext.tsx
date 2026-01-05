@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 
 interface User {
     id: number;
@@ -20,43 +20,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
     const [token, setTokenState] = useState<string | null>(localStorage.getItem('token'));
-    const [loading, setLoading] = useState(true);
+    const loading = false;
 
-    useEffect(() => {
-        if (token) {
-            // Decode token to get user info (simple decode, verification happens on backend)
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                setUser({
-                    id: payload.id,
-                    email: payload.email,
-                    provider: payload.provider
-                });
-            } catch (e) {
-                console.error('Invalid token', e);
-                logout();
-            }
+    const user = useMemo(() => {
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return {
+                id: payload.id,
+                email: payload.email,
+                provider: payload.provider
+            };
+        } catch (e) {
+            console.error('Invalid token', e);
+            return null;
         }
-        setLoading(false);
     }, [token]);
-
-    const login = (provider: 'google' | 'github', cliPort?: string) => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-        const query = cliPort ? `?cli_port=${cliPort}` : '';
-        window.location.href = `${apiUrl}/api/auth/${provider}${query}`;
-    };
 
     const logout = () => {
         localStorage.removeItem('token');
         setTokenState(null);
-        setUser(null);
     };
 
     const setToken = (newToken: string) => {
         localStorage.setItem('token', newToken);
         setTokenState(newToken);
+    };
+
+    const login = (provider: 'google' | 'github', cliPort?: string) => {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const query = cliPort ? `?cli_port=${cliPort}` : '';
+        window.location.href = `${apiUrl}/api/auth/${provider}${query}`;
     };
 
     return (
@@ -66,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {

@@ -112,7 +112,7 @@ router.post('/change-password', async (req, res) => {
 
         const token = authHeader.split(' ')[1];
         const userPayload = verifyToken(token);
-        if (!userPayload) return res.status(401).json({ error: 'Invalid token' });
+        if (!userPayload || typeof userPayload === 'string') return res.status(401).json({ error: 'Invalid token' });
 
         const { currentPassword, newPassword } = req.body;
         if (!currentPassword || !newPassword) {

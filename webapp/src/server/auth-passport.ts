@@ -11,11 +11,11 @@ const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
 const API_URL = process.env.API_URL || 'http://localhost:3001';
 
 // Serialize user to session (we might not use sessions if using JWTs, but passport needs it)
-passport.serializeUser((user: User, done) => {
+passport.serializeUser((user: any, done) => {
     done(null, user);
 });
 
-passport.deserializeUser((user: User, done) => {
+passport.deserializeUser((user: any, done) => {
     done(null, user);
 });
 

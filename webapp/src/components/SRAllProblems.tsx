@@ -25,6 +25,11 @@ type SortField = 'title' | 'difficulty' | 'next_review_date' | 'interval';
 type SortDirection = 'asc' | 'desc';
 type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard';
 
+const SortIcon = ({ field, currentSortField, sortDirection }: { field: SortField, currentSortField: SortField, sortDirection: SortDirection }) => {
+    if (currentSortField !== field) return null;
+    return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
+};
+
 export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsProps) {
     const [filter, setFilter] = useState<DifficultyFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -55,10 +60,11 @@ export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsPro
                 case 'title':
                     comparison = a.title.localeCompare(b.title);
                     break;
-                case 'difficulty':
+                case 'difficulty': {
                     const difficultyOrder = { easy: 0, medium: 1, hard: 2 };
                     comparison = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
                     break;
+                }
                 case 'next_review_date':
                     comparison = new Date(a.next_review_date).getTime() - new Date(b.next_review_date).getTime();
                     break;
@@ -81,10 +87,10 @@ export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsPro
         }
     };
 
-    const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return null;
-        return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
-    };
+    // SortIcon moved outside or defined here as a render function if needed, but better as a separate component
+    // However, since it uses closure variables sortField and sortDirection, we can pass them as props
+    // to a component defined outside.
+
 
     const formatDate = (date: Date) => {
         const d = new Date(date);
@@ -137,16 +143,16 @@ export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsPro
                     <thead>
                         <tr>
                             <th onClick={() => handleSort('title')} className="sortable">
-                                Title <SortIcon field="title" />
+                                Title <SortIcon field="title" currentSortField={sortField} sortDirection={sortDirection} />
                             </th>
                             <th onClick={() => handleSort('difficulty')} className="sortable">
-                                Difficulty <SortIcon field="difficulty" />
+                                Difficulty <SortIcon field="difficulty" currentSortField={sortField} sortDirection={sortDirection} />
                             </th>
                             <th onClick={() => handleSort('next_review_date')} className="sortable">
-                                Next Review <SortIcon field="next_review_date" />
+                                Next Review <SortIcon field="next_review_date" currentSortField={sortField} sortDirection={sortDirection} />
                             </th>
                             <th onClick={() => handleSort('interval')} className="sortable">
-                                Interval <SortIcon field="interval" />
+                                Interval <SortIcon field="interval" currentSortField={sortField} sortDirection={sortDirection} />
                             </th>
                             <th>Actions</th>
                         </tr>

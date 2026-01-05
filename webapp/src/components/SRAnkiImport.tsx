@@ -48,7 +48,7 @@ export function SRAnkiImport({ onImport, onClose }: SRAnkiImportProps) {
                     setSelectedDeck('LeetCode');
                 }
             }
-        } catch (err) {
+        } catch {
             setConnected(false);
             setError('Failed to connect to AnkiConnect');
         } finally {
