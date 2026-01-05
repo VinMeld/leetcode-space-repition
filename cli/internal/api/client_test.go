@@ -8,13 +8,13 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	client := NewClient("http://test.com/api", "lcsr_test_key")
+	client := NewClient("http://test.com/api", "lcsr_test_token")
 
 	if client.BaseURL != "http://test.com/api" {
 		t.Errorf("BaseURL = %v, want http://test.com/api", client.BaseURL)
 	}
-	if client.APIKey != "lcsr_test_key" {
-		t.Errorf("APIKey = %v, want lcsr_test_key", client.APIKey)
+	if client.Token != "lcsr_test_token" {
+		t.Errorf("Token = %v, want lcsr_test_token", client.Token)
 	}
 	if client.HTTPClient == nil {
 		t.Error("HTTPClient is nil")
@@ -31,7 +31,7 @@ func TestListProblems(t *testing.T) {
 		if r.URL.Path != "/problems" {
 			t.Errorf("Expected path /problems, got %s", r.URL.Path)
 		}
-		if r.Header.Get("Authorization") != "Bearer test_key" {
+		if r.Header.Get("Authorization") != "Bearer test_token" {
 			t.Errorf("Expected Authorization header")
 		}
 
@@ -40,7 +40,7 @@ func TestListProblems(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test_key")
+	client := NewClient(server.URL, "test_token")
 	result, err := client.ListProblems()
 
 	if err != nil {
@@ -72,7 +72,7 @@ func TestGetStats(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test_key")
+	client := NewClient(server.URL, "test_token")
 	result, err := client.GetStats()
 
 	if err != nil {
@@ -110,7 +110,7 @@ func TestReviewProblem(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test_key")
+	client := NewClient(server.URL, "test_token")
 	err := client.ReviewProblem(1, 4)
 
 	if err != nil {
@@ -125,7 +125,7 @@ func TestAPIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "bad_key")
+	client := NewClient(server.URL, "bad_token")
 	_, err := client.ListProblems()
 
 	if err == nil {
@@ -143,10 +143,77 @@ func TestHealth(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, "test_key")
+	client := NewClient(server.URL, "test_token")
 	err := client.Health()
 
 	if err != nil {
 		t.Fatalf("Health() error = %v", err)
+	}
+}
+
+func TestCreateProblem(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/problems" {
+			t.Errorf("Expected path /problems, got %s", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("Expected POST method, got %s", r.Method)
+		}
+
+		var body CreateProblemRequest
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("Failed to decode body: %v", err)
+		}
+
+		if body.Title != "New Problem" {
+			t.Errorf("Title = %s, want New Problem", body.Title)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test_token")
+	req := CreateProblemRequest{
+		Title:       "New Problem",
+		LeetcodeURL: "http://leetcode.com/problems/new-problem",
+		Difficulty:  "easy",
+	}
+	err := client.CreateProblem(req)
+
+	if err != nil {
+		t.Fatalf("CreateProblem() error = %v", err)
+	}
+}
+
+func TestDeleteProblem(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/problems/delete" {
+			t.Errorf("Expected path /problems/delete, got %s", r.URL.Path)
+		}
+		if r.Method != "POST" {
+			t.Errorf("Expected POST method, got %s", r.Method)
+		}
+
+		var body map[string]int
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("Failed to decode body: %v", err)
+		}
+
+		if body["problemId"] != 123 {
+			t.Errorf("problemId = %d, want 123", body["problemId"])
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test_token")
+	err := client.DeleteProblem(123)
+
+	if err != nil {
+		t.Fatalf("DeleteProblem() error = %v", err)
 	}
 }

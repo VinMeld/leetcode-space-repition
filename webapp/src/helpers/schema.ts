@@ -3,6 +3,7 @@ import type { Generated, Insertable, Selectable, Updateable } from 'kysely';
 // Database schema types for Kysely
 
 export interface Database {
+    users: UsersTable;
     problems: ProblemsTable;
     reviews: ReviewsTable;
     api_keys: ApiKeysTable;
@@ -10,8 +11,24 @@ export interface Database {
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+export interface UsersTable {
+    id: Generated<number>;
+    email: string;
+    provider: string; // 'google', 'github', 'local'
+    provider_id: string;
+    password_hash: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    created_at: Generated<Date>;
+}
+
+export type User = Selectable<UsersTable>;
+export type NewUser = Insertable<UsersTable>;
+export type UserUpdate = Updateable<UsersTable>;
+
 export interface ProblemsTable {
     id: Generated<number>;
+    user_id: number | null; // Nullable for migration, but should be populated
     title: string;
     leetcode_url: string;
     difficulty: Difficulty;
@@ -30,6 +47,7 @@ export type ProblemUpdate = Updateable<ProblemsTable>;
 
 export interface ReviewsTable {
     id: Generated<number>;
+    user_id: number | null;
     problem_id: number;
     quality: number;
     reviewed_at: Date;

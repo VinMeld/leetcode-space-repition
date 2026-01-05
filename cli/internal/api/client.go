@@ -13,15 +13,15 @@ import (
 // Client is the API client for the LeetCode SR API
 type Client struct {
 	BaseURL    string
-	APIKey     string
+	Token      string
 	HTTPClient *http.Client
 }
 
 // NewClient creates a new API client
-func NewClient(baseURL, apiKey string) *Client {
+func NewClient(baseURL, token string) *Client {
 	return &Client{
 		BaseURL: baseURL,
-		APIKey:  apiKey,
+		Token:   token,
 		HTTPClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -75,7 +75,7 @@ func (c *Client) request(method, endpoint string, body interface{}) ([]byte, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Authorization", "Bearer "+c.Token)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

@@ -1,11 +1,14 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
-	"strings"
+	"time"
 
 	"github.com/vinmeld/leetcode-sr-cli/internal/api"
 	"github.com/vinmeld/leetcode-sr-cli/internal/config"
@@ -56,9 +59,10 @@ Usage:
   leetcode-sr <command> [arguments]
 
 Commands:
-  login            Authenticate with API key
+  login            Authenticate via browser
   logout           Clear stored credentials
-  config           Show/update configuration
+  config           Show configuration
+  config set-url   Set API URL
   list, due        Show problems due today
   all              Show all tracked problems
   stats            Show statistics
@@ -84,7 +88,7 @@ func getClient() (*api.Client, error) {
 		return nil, err
 	}
 
-	return api.NewClient(cfg.APIURL, cfg.APIKey), nil
+	return api.NewClient(cfg.APIURL, cfg.Token), nil
 }
 
 func cmdLogin() {
@@ -94,34 +98,68 @@ func cmdLogin() {
 		return
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
-	// Prompt for API URL
-	fmt.Printf("API URL [%s]: ", cfg.APIURL)
-	urlInput, _ := reader.ReadString('\n')
-	urlInput = strings.TrimSpace(urlInput)
-	if urlInput != "" {
-		cfg.APIURL = urlInput
-	}
-
-	// Prompt for API Key
-	fmt.Print("API Key: ")
-	keyInput, _ := reader.ReadString('\n')
-	keyInput = strings.TrimSpace(keyInput)
-	if keyInput == "" {
-		tui.PrintError("API key is required")
+	// Start local server to receive token
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		tui.PrintError(fmt.Sprintf("Failed to start local server: %v", err))
 		return
 	}
-	cfg.APIKey = keyInput
+	port := listener.Addr().(*net.TCPAddr).Port
 
-	// Test the connection
-	client := api.NewClient(cfg.APIURL, cfg.APIKey)
-	if err := client.Health(); err != nil {
-		tui.PrintError(fmt.Sprintf("Connection failed: %v", err))
-		return
+	tokenChan := make(chan string)
+	server := &http.Server{
+		ReadHeaderTimeout: 3 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Enable CORS for local development if needed, though browser navigation doesn't need it
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+
+			token := r.URL.Query().Get("token")
+			if token != "" {
+				tokenChan <- token
+				fmt.Fprintf(w, "<h1>Login Successful</h1><p>You can close this window and return to the terminal.</p>")
+			} else {
+				http.Error(w, "No token provided", http.StatusBadRequest)
+			}
+		}),
 	}
 
-	// Save config
+	go func() {
+		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("Server error: %v\n", err)
+		}
+	}()
+
+	// Construct login URL
+	// Note: API URL might end with /api, we need to construct /api/auth/cli/login
+	// Assuming APIURL is like http://localhost:3001/api
+	loginURL := fmt.Sprintf("%s/auth/cli/login?port=%d", cfg.APIURL, port)
+
+	fmt.Printf("Opening browser to login: %s\n", loginURL)
+	fmt.Println("If browser doesn't open, please visit the URL manually.")
+
+	// Open browser
+	var cmd *exec.Cmd
+	// Simple OS detection for open command
+	if _, err := exec.LookPath("xdg-open"); err == nil {
+		cmd = exec.Command("xdg-open", loginURL)
+	} else if _, err := exec.LookPath("open"); err == nil {
+		cmd = exec.Command("open", loginURL) // Mac
+	} else {
+		// Fallback or Windows (start)
+		cmd = exec.Command("echo", "Please open the URL manually")
+	}
+
+	if cmd != nil {
+		_ = cmd.Start()
+	}
+
+	// Wait for token
+	token := <-tokenChan
+
+	// Shutdown server
+	_ = server.Shutdown(context.Background())
+
+	cfg.Token = token
 	if err := config.Save(cfg); err != nil {
 		tui.PrintError(fmt.Sprintf("Failed to save config: %v", err))
 		return
@@ -137,14 +175,14 @@ func cmdLogout() {
 		return
 	}
 
-	cfg.APIKey = ""
+	cfg.Token = ""
 
 	if err := config.Save(cfg); err != nil {
 		tui.PrintError(fmt.Sprintf("Failed to save config: %v", err))
 		return
 	}
 
-	tui.PrintSuccess("Logged out - API key cleared")
+	tui.PrintSuccess("Logged out - Token cleared")
 }
 
 func cmdConfig() {
@@ -154,15 +192,30 @@ func cmdConfig() {
 		return
 	}
 
+	if len(os.Args) > 2 && os.Args[2] == "set-url" {
+		if len(os.Args) < 4 {
+			tui.PrintError("Usage: leetcode-sr config set-url <url>")
+			return
+		}
+		newURL := os.Args[3]
+		cfg.APIURL = newURL
+		if err := config.Save(cfg); err != nil {
+			tui.PrintError(fmt.Sprintf("Failed to save config: %v", err))
+			return
+		}
+		tui.PrintSuccess(fmt.Sprintf("API URL updated to: %s", newURL))
+		return
+	}
+
 	fmt.Println("\nCurrent Configuration:")
 	fmt.Printf("  API URL: %s\n", cfg.APIURL)
 
-	if cfg.APIKey != "" {
-		// Mask the API key
-		masked := cfg.APIKey[:8] + strings.Repeat("*", len(cfg.APIKey)-8)
-		fmt.Printf("  API Key: %s\n", masked)
+	if cfg.Token != "" {
+		// Mask the token
+		masked := cfg.Token[:10] + "..." + cfg.Token[len(cfg.Token)-5:]
+		fmt.Printf("  Token:   %s\n", masked)
 	} else {
-		fmt.Println("  API Key: (not set)")
+		fmt.Println("  Token:   (not set)")
 	}
 	fmt.Println()
 }

@@ -40,15 +40,27 @@ export interface CreateProblemData {
 }
 
 // Fetch helpers
+function getHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
+
 async function fetchProblems(): Promise<Problem[]> {
-    const res = await fetch(`${API_BASE}/problems`);
+    const res = await fetch(`${API_BASE}/problems`, {
+        headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch problems');
     const text = await res.text();
     return superjson.parse(text);
 }
 
 async function fetchStats(): Promise<Stats> {
-    const res = await fetch(`${API_BASE}/stats`);
+    const res = await fetch(`${API_BASE}/stats`, {
+        headers: getHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch stats');
     const text = await res.text();
     return superjson.parse(text);
@@ -57,7 +69,7 @@ async function fetchStats(): Promise<Stats> {
 async function createProblem(data: CreateProblemData): Promise<void> {
     const res = await fetch(`${API_BASE}/problems`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to create problem');
@@ -66,7 +78,7 @@ async function createProblem(data: CreateProblemData): Promise<void> {
 async function reviewProblem(data: { problemId: number; quality: number }): Promise<void> {
     const res = await fetch(`${API_BASE}/problems/review`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to record review');
@@ -75,7 +87,7 @@ async function reviewProblem(data: { problemId: number; quality: number }): Prom
 async function deleteProblem(problemId: number): Promise<void> {
     const res = await fetch(`${API_BASE}/problems/delete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ problemId }),
     });
     if (!res.ok) throw new Error('Failed to delete problem');

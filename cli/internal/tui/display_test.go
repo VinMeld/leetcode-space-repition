@@ -117,6 +117,39 @@ func TestPrintProblemListEmpty(t *testing.T) {
 	}
 }
 
+func TestPrintProblemListWithItems(t *testing.T) {
+	problems := []api.Problem{
+		{
+			ID:             1,
+			Title:          "Two Sum",
+			Difficulty:     "easy",
+			Interval:       1,
+			IsDueToday:     true,
+			NextReviewDate: time.Now(),
+		},
+		{
+			ID:             2,
+			Title:          "Add Two Numbers",
+			Difficulty:     "medium",
+			Interval:       3,
+			IsDueToday:     false,
+			NextReviewDate: time.Now().Add(24 * time.Hour),
+		},
+	}
+	output := captureOutput(func() {
+		PrintProblemList(problems, "Test List", true)
+	})
+	if output == "" {
+		t.Error("PrintProblemList produced no output")
+	}
+	if !bytes.Contains([]byte(output), []byte("Two Sum")) {
+		t.Errorf("PrintProblemList output = %q, want to contain 'Two Sum'", output)
+	}
+	if !bytes.Contains([]byte(output), []byte("Add Two Numbers")) {
+		t.Errorf("PrintProblemList output = %q, want to contain 'Add Two Numbers'", output)
+	}
+}
+
 func TestPrintProblem(t *testing.T) {
 	problem := api.Problem{
 		ID:         1,

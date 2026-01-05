@@ -2,6 +2,7 @@
  * Database migration runner
  * Runs on container startup to ensure schema is up to date
  */
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { Pool } from 'pg';

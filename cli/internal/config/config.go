@@ -10,7 +10,7 @@ import (
 // Config holds the CLI configuration
 type Config struct {
 	APIURL string `json:"api_url"`
-	APIKey string `json:"api_key"`
+	Token  string `json:"token"`
 }
 
 // DefaultAPIURL is the default API server URL
@@ -18,11 +18,11 @@ const DefaultAPIURL = "http://localhost:3001/api"
 
 // configDir returns the config directory path
 func configDir() (string, error) {
-	home, err := os.UserHomeDir()
+	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".leetcode-sr"), nil
+	return filepath.Join(configDir, "leetcode-sr"), nil
 }
 
 // configPath returns the config file path
@@ -87,9 +87,9 @@ func Save(cfg *Config) error {
 	return os.WriteFile(path, data, 0600)
 }
 
-// IsConfigured returns true if API key is set
+// IsConfigured returns true if Token is set
 func (c *Config) IsConfigured() bool {
-	return c.APIKey != ""
+	return c.Token != ""
 }
 
 // Validate checks if the config is valid
@@ -97,8 +97,8 @@ func (c *Config) Validate() error {
 	if c.APIURL == "" {
 		return errors.New("API URL is not configured")
 	}
-	if c.APIKey == "" {
-		return errors.New("API key is not configured. Run 'leetcode-sr login' first")
+	if c.Token == "" {
+		return errors.New("Token is not configured. Run 'leetcode-sr login' first")
 	}
 	return nil
 }

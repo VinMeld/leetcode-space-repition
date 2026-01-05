@@ -1,0 +1,211 @@
+.sr-settings {
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    max-width: 600px;
+}
+
+.sr-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.sr-settings-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sr-settings-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-2);
+    line-height: 1;
+}
+
+.sr-settings-close:hover {
+    color: var(--text-primary);
+}
+
+.sr-settings-section {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border);
+}
+
+.sr-settings-section:last-of-type {
+    border-bottom: none;
+}
+
+.sr-settings-section h3 {
+    margin: 0 0 var(--space-2) 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.sr-settings-description {
+    margin: 0 0 var(--space-4) 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.sr-settings-slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.sr-settings-slider-group label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.sr-settings-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.sr-settings-value {
+    font-weight: 600;
+    color: var(--primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+.sr-settings-hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Slider Styling */
+.sr-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    outline: none;
+    cursor: pointer;
+}
+
+.sr-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sr-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+.sr-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+}
+
+/* Difficulty-specific slider colors */
+.sr-slider-easy::-webkit-slider-thumb {
+    background: var(--success);
+}
+
+.sr-slider-medium::-webkit-slider-thumb {
+    background: var(--warning);
+}
+
+.sr-slider-hard::-webkit-slider-thumb {
+    background: var(--error);
+}
+
+/* Toggle Switch */
+.sr-settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    cursor: pointer;
+    margin-bottom: var(--space-4);
+}
+
+.sr-settings-toggle input {
+    display: none;
+}
+
+.sr-toggle-slider {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: var(--surface-2);
+    border-radius: 13px;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sr-toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.sr-settings-toggle input:checked+.sr-toggle-slider {
+    background: var(--primary);
+}
+
+.sr-settings-toggle input:checked+.sr-toggle-slider::after {
+    transform: translateX(22px);
+}
+
+.sr-toggle-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* Actions */
+.sr-settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+}
+
+.sr-settings-reset {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sr-settings-reset:hover {
+    background: var(--surface-3);
+    color: var(--text-primary);
+}
