@@ -77,7 +77,7 @@ func PrintProblemList(problems []api.Problem, title string, showAll bool) {
 	fmt.Println(strings.Repeat("─", 50))
 
 	for _, p := range problems {
-		PrintProblem(p, showAll)
+		PrintProblem(p, false)
 	}
 	fmt.Println()
 }

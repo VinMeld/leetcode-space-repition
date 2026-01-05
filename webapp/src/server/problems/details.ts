@@ -41,7 +41,10 @@ export async function getProblemDetails(req: Request, res: Response) {
         const latestReview = reviews.length > 0 ? reviews[0].reviewed_at : null;
 
         res.json({
-            problem,
+            problem: {
+                ...problem,
+                easiness_factor: parseFloat(String(problem.easiness_factor)),
+            },
             reviews,
             stats: {
                 lapses,

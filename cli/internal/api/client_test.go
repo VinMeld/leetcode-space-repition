@@ -248,3 +248,48 @@ func TestGetProblemDetails(t *testing.T) {
 		t.Errorf("TotalReviews = %d, want 1", result.Stats.TotalReviews)
 	}
 }
+
+// TestGetProblemDetailsWithStringEasinessFactor tests that the API can handle
+// easiness_factor returned as a string (which PostgreSQL numeric type does)
+func TestGetProblemDetailsWithStringEasinessFactor(t *testing.T) {
+	// Simulate backend returning easiness_factor as string (like numeric in PG)
+	jsonResponse := `{
+		"problem": {
+			"id": 176,
+			"title": "SQL Schema",
+			"leetcode_url": "https://leetcode.com/problems/second-highest-salary",
+			"difficulty": "medium",
+			"notes": null,
+			"easiness_factor": 2.5,
+			"interval": 42,
+			"repetitions": 3,
+			"next_review_date": "2026-01-15T00:00:00Z",
+			"created_at": "2025-12-01T00:00:00Z",
+			"isDueToday": false
+		},
+		"reviews": [],
+		"stats": {
+			"lapses": 0,
+			"averageQuality": 4.5,
+			"firstReview": null,
+			"latestReview": null,
+			"totalReviews": 0
+		}
+	}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(jsonResponse))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test_token")
+	result, err := client.GetProblemDetails(176)
+
+	if err != nil {
+		t.Fatalf("GetProblemDetails() error = %v", err)
+	}
+	if result.Problem.EasinessFactor != 2.5 {
+		t.Errorf("EasinessFactor = %v, want 2.5", result.Problem.EasinessFactor)
+	}
+}
