@@ -91,17 +91,31 @@ type CardInfo struct {
 	Fields map[string]struct {
 		Value string `json:"value"`
 	} `json:"fields"`
-	Tags []string `json:"tags"`
+	Tags     []string `json:"tags"`
+	Interval int      `json:"interval"`
+	Factor   int      `json:"factor"` // Ease factor (e.g. 2500)
+	Reps     int      `json:"reps"`
+	Due      int64    `json:"due"` // Due date (epoch or days relative to creation?) - AnkiConnect returns epoch for due date usually? No, "due" is integer.
+	// Actually AnkiConnect notesInfo returns:
+	// "cards": [ { "interval": 1, "factor": 2500, "reps": 1, "due": 1234567890, ... } ]
+	// Wait, notesInfo returns note info. cardsInfo returns card info.
+	// The current implementation uses notesInfo but calls it CardsInfo.
+	// We need to switch to cardsInfo or ensure notesInfo returns what we need.
+	// notesInfo DOES NOT return interval/factor/reps. cardsInfo DOES.
+	// But cardsInfo takes card IDs, not note IDs.
+	// findNotes returns note IDs. findCards returns card IDs.
+	// So we need to change FindCards to use findCards action.
 }
 
 func (c *Client) FindCards(query string) ([]int64, error) {
 	var ids []int64
-	err := c.invoke("findNotes", map[string]string{"query": query}, &ids)
+	// "findCards" returns card IDs, which we need for card stats
+	err := c.invoke("findCards", map[string]string{"query": query}, &ids)
 	return ids, err
 }
 
 func (c *Client) CardsInfo(ids []int64) ([]CardInfo, error) {
 	var cards []CardInfo
-	err := c.invoke("notesInfo", map[string][]int64{"notes": ids}, &cards)
+	err := c.invoke("cardsInfo", map[string][]int64{"cards": ids}, &cards)
 	return cards, err
 }

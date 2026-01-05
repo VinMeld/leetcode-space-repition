@@ -8,6 +8,11 @@ const createProblemSchema = z.object({
     leetcodeUrl: z.string().url(),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     notes: z.string().optional(),
+    // Optional SM-2 parameters for import
+    easinessFactor: z.number().optional(),
+    interval: z.number().optional(),
+    repetitions: z.number().optional(),
+    nextReviewDate: z.string().datetime().optional(), // Expect ISO string
 });
 
 export async function createProblem(req: Request, res: Response) {
@@ -26,7 +31,7 @@ export async function createProblem(req: Request, res: Response) {
             });
         }
 
-        const { title, leetcodeUrl, difficulty, notes } = validation.data;
+        const { title, leetcodeUrl, difficulty, notes, easinessFactor, interval, repetitions, nextReviewDate } = validation.data;
 
         // Check for existing problem
         const existing = await db
@@ -51,10 +56,10 @@ export async function createProblem(req: Request, res: Response) {
                 leetcode_url: leetcodeUrl,
                 difficulty: difficulty as Difficulty,
                 notes: notes || null,
-                easiness_factor: 2.5,
-                interval: 0,
-                repetitions: 0,
-                next_review_date: new Date(),
+                easiness_factor: easinessFactor ?? 2.5,
+                interval: interval ?? 0,
+                repetitions: repetitions ?? 0,
+                next_review_date: nextReviewDate ? new Date(nextReviewDate) : new Date(),
             })
             .returning(['id', 'title', 'created_at'])
             .executeTakeFirst();

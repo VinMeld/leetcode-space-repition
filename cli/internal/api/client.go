@@ -144,10 +144,14 @@ func (c *Client) ReviewProblem(problemID, quality int) error {
 
 // CreateProblemRequest is the request body for creating a problem
 type CreateProblemRequest struct {
-	Title       string `json:"title"`
-	LeetcodeURL string `json:"leetcodeUrl"`
-	Difficulty  string `json:"difficulty"`
-	Notes       string `json:"notes,omitempty"`
+	Title          string  `json:"title"`
+	LeetcodeURL    string  `json:"leetcodeUrl"`
+	Difficulty     string  `json:"difficulty"`
+	Notes          string  `json:"notes,omitempty"`
+	EasinessFactor float64 `json:"easinessFactor,omitempty"`
+	Interval       int     `json:"interval,omitempty"`
+	Repetitions    int     `json:"repetitions,omitempty"`
+	NextReviewDate string  `json:"nextReviewDate,omitempty"` // ISO string
 }
 
 // CreateProblem adds a new problem

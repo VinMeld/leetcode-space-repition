@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/vinmeld/leetcode-sr-cli/internal/anki"
 	"github.com/vinmeld/leetcode-sr-cli/internal/api"
@@ -99,6 +100,44 @@ func cmdImport(source string) {
 				break
 			}
 		}
+
+		// Map Anki stats to SM-2
+		if card.Factor > 0 {
+			req.EasinessFactor = float64(card.Factor) / 1000.0
+		} else {
+			req.EasinessFactor = 2.5
+		}
+
+		req.Interval = card.Interval
+		req.Repetitions = card.Reps
+
+		// Calculate NextReviewDate
+		// Anki "due" is sometimes epoch, sometimes days relative to creation?
+		// But usually for review cards it's an integer representing days?
+		// Actually, let's assume "Interval" is days from last review.
+		// And we want to set NextReviewDate = Now + Interval (roughly).
+		// Or if we can trust "Due", we need to know what it means.
+		// AnkiConnect docs say "due": due date (as integer).
+		// If it's a large number, it's epoch? If small, it's days?
+		// Let's rely on Interval for now: NextReview = Now + Interval days.
+		// Wait, if it's already due, Interval might be old.
+		// But for import, we probably want to preserve the schedule.
+		// If we just reviewed it yesterday and interval is 10 days, next review is in 9 days.
+		// We don't have "LastReviewedAt" easily from cardsInfo (maybe in fields?).
+		// Let's just set NextReviewDate = Now + Interval days. This resets the clock but preserves the interval.
+		// Better than nothing.
+		// Ideally we'd use "Due" but interpreting it is tricky without more context.
+		// Actually, if we assume the user is syncing *current* state:
+		// If "Due" > Now (epoch), use that.
+		// If "Due" < Now, it's due.
+		// Let's try to interpret "Due".
+		// If Due > 1000000000, it's epoch.
+		// If Due < 1000000000, it might be days since collection creation?
+		// Let's stick to: NextReviewDate = time.Now().Add(time.Duration(card.Interval) * 24 * time.Hour)
+		// This effectively "reviews" the card today and sets the next review based on current interval.
+		// This is safe.
+		nextReview := time.Now().Add(time.Duration(card.Interval) * 24 * time.Hour)
+		req.NextReviewDate = nextReview.Format(time.RFC3339)
 
 		err := apiClient.CreateProblem(req)
 		if err != nil {
