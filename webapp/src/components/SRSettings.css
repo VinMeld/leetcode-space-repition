@@ -231,3 +231,12 @@
     background: var(--surface-3);
     color: var(--text-primary);
 }
+
+.sr-settings-danger {
+    border: 1px solid #ef4444;
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.sr-settings-danger h3 {
+    color: #ef4444;
+}

@@ -35,3 +35,22 @@ export async function deleteProblem(req: Request, res: Response) {
         res.status(500).json({ error: 'Failed to delete problem' });
     }
 }
+
+export async function deleteAllProblems(req: Request, res: Response) {
+    try {
+        const user = req.user as { id: number } | undefined;
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        await db
+            .deleteFrom('problems')
+            .where('user_id', '=', user.id)
+            .execute();
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting all problems:', error);
+        res.status(500).json({ error: 'Failed to delete all problems' });
+    }
+}

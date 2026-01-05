@@ -231,6 +231,39 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                     </div>
                 )}
 
+                <div className="sr-settings-section sr-settings-danger">
+                    <h3>Danger Zone</h3>
+                    <p className="sr-settings-description">
+                        Irreversible actions. Please be careful.
+                    </p>
+                    <Button
+                        variant="danger"
+                        onClick={async () => {
+                            if (confirm('Are you sure you want to delete ALL your problems and review history? This cannot be undone.')) {
+                                try {
+                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`${apiUrl}/api/problems/delete-all`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`
+                                        }
+                                    });
+                                    if (!res.ok) throw new Error('Failed to delete data');
+                                    toast.success('All data deleted successfully');
+                                    // Optional: Refresh or redirect
+                                    window.location.reload();
+                                } catch (error) {
+                                    toast.error('Failed to delete data');
+                                    console.error(error);
+                                }
+                            }
+                        }}
+                    >
+                        Delete All Data
+                    </Button>
+                </div>
+
                 <div className="sr-settings-actions">
                     <button
                         className="sr-settings-reset"

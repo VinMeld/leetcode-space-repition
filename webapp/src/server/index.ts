@@ -8,7 +8,7 @@ import { db } from '../helpers/db';
 import { listProblems } from './problems/list';
 import { createProblem } from './problems/create';
 import { reviewProblem } from './problems/review';
-import { deleteProblem } from './problems/delete';
+import { deleteProblem, deleteAllProblems } from './problems/delete';
 import { getStats } from './stats';
 // import { validateApiKey } from './auth'; // Deprecated in favor of JWT
 
@@ -89,6 +89,7 @@ app.get('/api/problems', listProblems);
 app.post('/api/problems', createProblem);
 app.post('/api/problems/review', reviewProblem);
 app.post('/api/problems/delete', deleteProblem);
+app.post('/api/problems/delete-all', deleteAllProblems);
 
 // API Routes - Stats
 app.get('/api/stats', getStats);
