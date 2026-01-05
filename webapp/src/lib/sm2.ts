@@ -17,8 +17,11 @@ export interface SM2Input {
     easinessFactor: number;  // Current EF (typically starts at 2.5)
     interval: number;  // Current interval in days
     repetitions: number;  // Number of successful repetitions
-    sameDayRetry?: boolean; // Whether to retry today if quality < 3
+    difficulty?: 'easy' | 'medium' | 'hard';
+    settings?: SM2Settings;
 }
+
+import type { SM2Settings } from './settings';
 
 /**
  * Calculate the next review parameters using SM-2 algorithm
@@ -32,7 +35,8 @@ export interface SM2Input {
  * 5 - Perfect response
  */
 export function calculateSM2(input: SM2Input): SM2Result {
-    const { quality, easinessFactor: currentEF, interval: currentInterval, repetitions: currentReps, sameDayRetry } = input;
+    const { quality, easinessFactor: currentEF, interval: currentInterval, repetitions: currentReps, difficulty, settings } = input;
+    const sameDayRetry = settings?.sameDayRetry ?? true;
 
     let newEF = currentEF;
     let newInterval: number;
@@ -51,6 +55,17 @@ export function calculateSM2(input: SM2Input): SM2Result {
             newInterval = Math.round(currentInterval * currentEF);
         }
 
+        // Apply difficulty multiplier if settings provided
+        if (settings && difficulty) {
+            let multiplier = 1.0;
+            switch (difficulty) {
+                case 'easy': multiplier = settings.easyMultiplier; break;
+                case 'medium': multiplier = settings.mediumMultiplier; break;
+                case 'hard': multiplier = settings.hardMultiplier; break;
+            }
+            newInterval = Math.round(newInterval * multiplier);
+        }
+
         // Update easiness factor
         // EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
         const qFactor = 5 - quality;
@@ -58,14 +73,30 @@ export function calculateSM2(input: SM2Input): SM2Result {
     } else {
         // Failed recall - reset
         newRepetitions = 0;
-        // If sameDayRetry is enabled and quality is low (< 3), set interval to 0 (due immediately)
-        // Otherwise set to 1 day
-        newInterval = (sameDayRetry && quality < 3) ? 0 : 1;
+
+        // Apply wrong answer penalty to interval if settings provided, otherwise default to 1
+        // But if sameDayRetry is on, it becomes 0
+        if (sameDayRetry && quality < 3) {
+            newInterval = 0;
+        } else {
+            // Standard penalty logic: usually reset to 1, but some variants reduce interval
+            // Here we stick to SM-2 default of 1 for lapse, but could use penalty
+            // settings.wrongAnswerPenalty is usually for reducing interval, e.g. interval * 0.5
+            // But SM-2 resets reps to 0, so interval usually goes to 1.
+            // Let's stick to 1 for now unless we want to implement "lapse interval"
+            newInterval = 1;
+        }
+
         // EF remains unchanged on failure
     }
 
     // Ensure EF never goes below 1.3
     newEF = Math.max(1.3, newEF);
+
+    // Ensure interval is at least minInterval (unless it's 0 for same day retry)
+    if (newInterval > 0 && settings) {
+        newInterval = Math.max(newInterval, settings.minInterval);
+    }
 
     // Calculate next review date
     const nextReviewDate = new Date();

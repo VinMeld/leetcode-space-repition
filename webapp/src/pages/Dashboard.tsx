@@ -15,11 +15,9 @@ import { Dialog } from '../components/ui/Dialog';
 import {
     useProblems,
     useStats,
-    useCreateProblem,
-    useReviewProblem,
-    useDeleteProblem,
 } from '../hooks/useProblems';
 import type { CreateProblemData } from '../hooks/useProblems';
+import { ProblemDetails } from '../components/ProblemDetails';
 import { loadSettings } from '../lib/settings';
 import './Dashboard.css';
 
@@ -28,12 +26,11 @@ export const Dashboard: React.FC = () => {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isAnkiImportOpen, setIsAnkiImportOpen] = useState(false);
     const [reviewingProblem, setReviewingProblem] = useState<number | null>(null);
+    const [selectedProblem, setSelectedProblem] = useState<any>(null); // Fix: Add state for selected problem
 
-    const { data: problems = [], isLoading: problemsLoading } = useProblems();
+    const { problems: problemsQuery, createProblem, reviewProblem, deleteProblem } = useProblems();
+    const { data: problems = [], isLoading: problemsLoading } = problemsQuery;
     const { data: stats } = useStats();
-    const createProblem = useCreateProblem();
-    const reviewProblem = useReviewProblem();
-    const deleteProblem = useDeleteProblem();
 
     const dueCount = problems.filter(p => p.isDueToday).length;
 
@@ -82,11 +79,11 @@ export const Dashboard: React.FC = () => {
             await reviewProblem.mutateAsync({
                 problemId,
                 quality,
-                sameDayRetry: settings.sameDayRetry
+                settings
             });
             const qualityMessage = quality >= 3 ? 'Great job!' : 'Keep practicing!';
             toast.success(`Review recorded. ${qualityMessage}`);
-        } catch {
+        } catch (error) {
             toast.error('Failed to record review');
         } finally {
             setReviewingProblem(null);
@@ -143,19 +140,29 @@ export const Dashboard: React.FC = () => {
                     <>
                         <TabPanel id="due" activeTab={activeTab}>
                             <SRProblemList
-                                problems={problems}
+                                problems={problems.map(p => ({
+                                    ...p,
+                                    next_review_date: new Date(p.next_review_date),
+                                    notes: p.notes || null,
+                                }))}
                                 showDueOnly={true}
                                 onReview={handleReview}
                                 onDelete={handleDelete}
+                                onInfo={setSelectedProblem}
                                 isReviewing={reviewingProblem}
                             />
                         </TabPanel>
 
                         <TabPanel id="all" activeTab={activeTab}>
                             <SRAllProblems
-                                problems={problems}
+                                problems={problems.map(p => ({
+                                    ...p,
+                                    next_review_date: new Date(p.next_review_date),
+                                    notes: p.notes || null,
+                                }))}
                                 onReview={handleReview}
                                 onDelete={handleDelete}
+                                onInfo={setSelectedProblem}
                             />
                         </TabPanel>
 
@@ -189,6 +196,13 @@ export const Dashboard: React.FC = () => {
                         onClose={() => setIsAnkiImportOpen(false)}
                     />
                 </Dialog>
+
+                {selectedProblem && (
+                    <ProblemDetails
+                        problemId={selectedProblem.id}
+                        onClose={() => setSelectedProblem(null)}
+                    />
+                )}
             </div>
         </AppLayout>
     );

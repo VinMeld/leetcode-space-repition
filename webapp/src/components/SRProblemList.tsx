@@ -22,6 +22,7 @@ interface SRProblemListProps {
     showDueOnly?: boolean;
     onReview: (problemId: number, quality: number) => void;
     onDelete: (problemId: number) => void;
+    onInfo: (problem: Problem) => void;
     isReviewing?: number | null;
 }
 
@@ -39,6 +40,7 @@ export const SRProblemList: React.FC<SRProblemListProps> = ({
     showDueOnly = false,
     onReview,
     onDelete,
+    onInfo,
     isReviewing,
 }) => {
     const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
@@ -155,14 +157,25 @@ export const SRProblemList: React.FC<SRProblemListProps> = ({
                         )}
 
                         {!showDueOnly && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onDelete(problem.id)}
-                                className="delete-btn"
-                            >
-                                <Trash2 size={16} />
-                            </Button>
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onInfo(problem)}
+                                    className="info-btn mr-2"
+                                    title="Details"
+                                >
+                                    <span className="text-blue-400">ℹ️</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onDelete(problem.id)}
+                                    className="delete-btn"
+                                >
+                                    <Trash2 size={16} />
+                                </Button>
+                            </>
                         )}
                     </div>
                 </div>

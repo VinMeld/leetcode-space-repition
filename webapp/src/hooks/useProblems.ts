@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import type { SM2Settings } from '../lib/settings';
 
-const API_BASE = '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Types
 export interface Problem {
@@ -8,14 +10,21 @@ export interface Problem {
     title: string;
     leetcode_url: string;
     difficulty: 'easy' | 'medium' | 'hard';
-    notes: string | null;
+    notes?: string;
     easiness_factor: number;
     interval: number;
     repetitions: number;
-    next_review_date: Date;
-    last_reviewed_at: Date | null;
-    created_at: Date;
+    next_review_date: string;
+    last_reviewed_at?: string;
+    created_at: string;
     isDueToday: boolean;
+}
+
+export interface CreateProblemData {
+    title: string;
+    leetcodeUrl: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    notes?: string;
 }
 
 export interface Stats {
@@ -31,114 +40,99 @@ export interface Stats {
     };
 }
 
-export interface CreateProblemData {
-    title: string;
-    leetcodeUrl: string;
-    difficulty: 'easy' | 'medium' | 'hard';
-    notes?: string;
-}
-
-// Fetch helpers
-function getHeaders() {
-    const token = localStorage.getItem('token');
-    return {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-}
-
-async function fetchProblems(): Promise<Problem[]> {
-    const res = await fetch(`${API_BASE}/problems`, {
-        headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch problems');
-    return res.json();
-}
-
-async function fetchStats(): Promise<Stats> {
-    const res = await fetch(`${API_BASE}/stats`, {
-        headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    return res.json();
-}
-
-async function createProblem(data: CreateProblemData): Promise<void> {
-    const res = await fetch(`${API_BASE}/problems`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to create problem');
-}
-
-async function reviewProblem(data: { problemId: number; quality: number; sameDayRetry?: boolean }): Promise<void> {
-    const res = await fetch(`${API_BASE}/problems/review`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to record review');
-}
-
-async function deleteProblem(problemId: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/problems/delete`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ problemId }),
-    });
-    if (!res.ok) throw new Error('Failed to delete problem');
-}
-
 // Hooks
 export function useProblems() {
-    return useQuery({
-        queryKey: ['problems'],
-        queryFn: fetchProblems,
-        staleTime: 30000,
+    const { token } = useAuth();
+    const queryClient = useQueryClient();
+
+    const getHeaders = () => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
     });
+
+    const problems = useQuery({
+        queryKey: ['problems'],
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/problems`, {
+                headers: getHeaders()
+            });
+            if (!res.ok) throw new Error('Failed to fetch problems');
+            return res.json() as Promise<Problem[]>;
+        },
+        enabled: !!token,
+    });
+
+    const createProblem = useMutation({
+        mutationFn: async (newProblem: CreateProblemData) => {
+            const res = await fetch(`${API_URL}/problems`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(newProblem),
+            });
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to create problem');
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['problems'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        },
+    });
+
+    const reviewProblem = useMutation({
+        mutationFn: async ({ problemId, quality, settings }: { problemId: number; quality: number; settings?: SM2Settings }) => {
+            const res = await fetch(`${API_URL}/problems/review`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ problemId, quality, settings }),
+            });
+            if (!res.ok) throw new Error('Failed to review problem');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['problems'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        },
+    });
+
+    const deleteProblem = useMutation({
+        mutationFn: async (problemId: number) => {
+            const res = await fetch(`${API_URL}/problems/delete`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ problemId }),
+            });
+            if (!res.ok) throw new Error('Failed to delete problem');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['problems'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        },
+    });
+
+    return { problems, createProblem, reviewProblem, deleteProblem };
 }
 
 export function useStats() {
+    const { token } = useAuth();
+
+    const getHeaders = () => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    });
+
     return useQuery({
         queryKey: ['stats'],
-        queryFn: fetchStats,
-        staleTime: 30000,
-    });
-}
-
-export function useCreateProblem() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: createProblem,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['problems'] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        queryFn: async () => {
+            const res = await fetch(`${API_URL}/stats`, {
+                headers: getHeaders()
+            });
+            if (!res.ok) throw new Error('Failed to fetch stats');
+            return res.json() as Promise<Stats>;
         },
-    });
-}
-
-export function useReviewProblem() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: reviewProblem,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['problems'] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
-        },
-    });
-}
-
-export function useDeleteProblem() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: deleteProblem,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['problems'] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
-        },
+        enabled: !!token,
     });
 }

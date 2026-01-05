@@ -217,3 +217,34 @@ func TestDeleteProblem(t *testing.T) {
 		t.Fatalf("DeleteProblem() error = %v", err)
 	}
 }
+
+func TestGetProblemDetails(t *testing.T) {
+	details := ProblemDetails{
+		Problem: Problem{ID: 1, Title: "Test Problem", Difficulty: "easy"},
+		Reviews: []Review{{ID: 1, Quality: 4}},
+	}
+	details.Stats.TotalReviews = 1
+	details.Stats.AverageQuality = 4.0
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/problems/1/details" {
+			t.Errorf("Expected path /problems/1/details, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(details)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test_token")
+	result, err := client.GetProblemDetails(1)
+
+	if err != nil {
+		t.Fatalf("GetProblemDetails() error = %v", err)
+	}
+	if result.Problem.Title != "Test Problem" {
+		t.Errorf("Title = %s, want Test Problem", result.Problem.Title)
+	}
+	if result.Stats.TotalReviews != 1 {
+		t.Errorf("TotalReviews = %d, want 1", result.Stats.TotalReviews)
+	}
+}

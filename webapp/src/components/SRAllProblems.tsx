@@ -19,6 +19,7 @@ interface SRAllProblemsProps {
     problems: Problem[];
     onReview: (problemId: number, quality: number) => void;
     onDelete: (problemId: number) => void;
+    onInfo: (problem: Problem) => void;
 }
 
 type SortField = 'title' | 'difficulty' | 'next_review_date' | 'interval';
@@ -30,7 +31,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: { field: SortField
     return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
 };
 
-export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsProps) {
+export function SRAllProblems({ problems, onReview, onDelete, onInfo }: SRAllProblemsProps) {
     const [filter, setFilter] = useState<DifficultyFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortField, setSortField] = useState<SortField>('next_review_date');
@@ -196,6 +197,13 @@ export function SRAllProblems({ problems, onReview, onDelete }: SRAllProblemsPro
                                             title="Hard - struggled"
                                         >
                                             ✗
+                                        </button>
+                                        <button
+                                            className="sr-action-btn sr-action-info"
+                                            onClick={() => onInfo(problem)}
+                                            title="Details"
+                                        >
+                                            ℹ️
                                         </button>
                                         <button
                                             className="sr-action-btn sr-action-delete"

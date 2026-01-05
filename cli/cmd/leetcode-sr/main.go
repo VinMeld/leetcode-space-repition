@@ -40,6 +40,8 @@ func main() {
 		cmdStats()
 	case "review":
 		cmdReview()
+	case "details":
+		cmdDetails()
 	case "import":
 		if len(os.Args) < 3 {
 			tui.PrintError("Usage: leetcode-sr import <source>")
@@ -73,6 +75,7 @@ Commands:
   all              Show all tracked problems
   stats            Show statistics
   review <id> <q>  Rate a problem (quality 0-5)
+  details <id>     Show detailed problem info
   import <source>  Import problems from source (e.g. anki)
   version          Show version
   help             Show this help

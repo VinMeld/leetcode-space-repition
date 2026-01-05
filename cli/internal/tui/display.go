@@ -141,3 +141,63 @@ func FormatDuration(d time.Duration) string {
 	}
 	return fmt.Sprintf("%dd", int(d.Hours()/24))
 }
+
+// PrintProblemDetails displays detailed information about a problem
+func PrintProblemDetails(details *api.ProblemDetails) {
+	p := details.Problem
+	stats := details.Stats
+
+	fmt.Printf("\n%s%s%s\n", Bold, p.Title, Reset)
+	fmt.Println(strings.Repeat("─", 50))
+
+	// Stats Grid
+	fmt.Printf("  %sID:%s %d\n", Gray, Reset, p.ID)
+	fmt.Printf("  %sURL:%s %s\n", Gray, Reset, p.LeetcodeURL)
+	fmt.Printf("  %sDifficulty:%s %s%s%s\n", Gray, Reset, DifficultyColor(p.Difficulty), p.Difficulty, Reset)
+	fmt.Printf("  %sAdded:%s %s\n", Gray, Reset, p.CreatedAt.Format("Jan 2, 2006"))
+
+	fmt.Println()
+	fmt.Printf("  %sInterval:%s %d days\n", Gray, Reset, p.Interval)
+	fmt.Printf("  %sEasiness:%s %.2f\n", Gray, Reset, p.EasinessFactor)
+	fmt.Printf("  %sDue:%s %s\n", Gray, Reset, p.NextReviewDate.Format("Jan 2, 2006"))
+
+	fmt.Println()
+	fmt.Printf("  %sTotal Reviews:%s %d\n", Gray, Reset, stats.TotalReviews)
+	fmt.Printf("  %sLapses:%s %d\n", Gray, Reset, stats.Lapses)
+	fmt.Printf("  %sAvg Quality:%s %.2f\n", Gray, Reset, stats.AverageQuality)
+
+	if stats.FirstReview != nil {
+		fmt.Printf("  %sFirst Review:%s %s\n", Gray, Reset, stats.FirstReview.Format("Jan 2, 2006"))
+	}
+	if stats.LatestReview != nil {
+		fmt.Printf("  %sLatest Review:%s %s\n", Gray, Reset, stats.LatestReview.Format("Jan 2, 2006"))
+	}
+
+	// History Table
+	if len(details.Reviews) > 0 {
+		fmt.Printf("\n%sReview History%s\n", Bold, Reset)
+		fmt.Println("  Date          Rating  Type")
+		fmt.Println("  " + strings.Repeat("─", 30))
+
+		for _, r := range details.Reviews {
+			ratingColor := Red
+			if r.Quality >= 4 {
+				ratingColor = Green
+			} else if r.Quality == 3 {
+				ratingColor = Yellow
+			}
+
+			reviewType := "Review"
+			if r.Quality < 3 {
+				reviewType = "Lapse"
+			}
+
+			fmt.Printf("  %s  %s%d%s       %s\n",
+				r.ReviewedAt.Format("Jan 02, 2006"),
+				ratingColor, r.Quality, Reset,
+				reviewType,
+			)
+		}
+	}
+	fmt.Println()
+}

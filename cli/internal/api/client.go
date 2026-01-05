@@ -176,3 +176,41 @@ func (c *Client) Health() error {
 	_, err := c.request("GET", "/health", nil)
 	return err
 }
+
+// Review represents a historical review
+type Review struct {
+	ID         int       `json:"id"`
+	ProblemID  int       `json:"problem_id"`
+	Quality    int       `json:"quality"`
+	ReviewedAt time.Time `json:"reviewed_at"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+// ProblemDetails represents detailed problem information
+type ProblemDetails struct {
+	Problem Problem  `json:"problem"`
+	Reviews []Review `json:"reviews"`
+	Stats   struct {
+		Lapses         int        `json:"lapses"`
+		AverageQuality float64    `json:"averageQuality"`
+		FirstReview    *time.Time `json:"firstReview"`
+		LatestReview   *time.Time `json:"latestReview"`
+		TotalReviews   int        `json:"totalReviews"`
+	} `json:"stats"`
+}
+
+// GetProblemDetails returns detailed information for a problem
+func (c *Client) GetProblemDetails(problemID int) (*ProblemDetails, error) {
+	endpoint := fmt.Sprintf("/problems/%d/details", problemID)
+	data, err := c.request("GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var details ProblemDetails
+	if err := json.Unmarshal(data, &details); err != nil {
+		return nil, fmt.Errorf("failed to parse details: %w", err)
+	}
+
+	return &details, nil
+}

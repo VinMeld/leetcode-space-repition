@@ -231,6 +231,40 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                     </div>
                 )}
 
+                <div className="sr-settings-section">
+                    <h3>Reschedule</h3>
+                    <p className="sr-settings-description">
+                        Apply current multipliers to all existing problem intervals. Use this if you changed difficulty settings and want them to take effect immediately on old reviews.
+                    </p>
+                    <Button
+                        onClick={async () => {
+                            if (confirm('This will recalculate intervals for ALL problems based on your current settings. Continue?')) {
+                                try {
+                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`${apiUrl}/api/problems/reschedule`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ settings }),
+                                    });
+                                    if (!res.ok) throw new Error('Failed to reschedule');
+                                    const data = await res.json();
+                                    toast.success(`Rescheduled ${data.updatedCount} problems`);
+                                    window.location.reload();
+                                } catch (error) {
+                                    toast.error('Failed to reschedule');
+                                    console.error(error);
+                                }
+                            }
+                        }}
+                    >
+                        Reschedule All
+                    </Button>
+                </div>
+
                 <div className="sr-settings-section sr-settings-danger">
                     <h3>Danger Zone</h3>
                     <p className="sr-settings-description">
