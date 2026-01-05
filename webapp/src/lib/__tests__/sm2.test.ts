@@ -57,3 +57,24 @@ describe('SM-2 Algorithm', () => {
         expect(result.repetitions).toBe(6);
     });
 });
+
+import { isDueToday } from '../sm2';
+
+describe('isDueToday', () => {
+    it('should return true if date is today', () => {
+        const today = new Date();
+        expect(isDueToday(today)).toBe(true);
+    });
+
+    it('should return true if date is in the past', () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        expect(isDueToday(yesterday)).toBe(true);
+    });
+
+    it('should return false if date is tomorrow', () => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        expect(isDueToday(tomorrow)).toBe(false);
+    });
+});

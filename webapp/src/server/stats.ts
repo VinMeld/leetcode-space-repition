@@ -66,8 +66,8 @@ async function calculateStreak(): Promise<number> {
     // Get distinct review dates, ordered by most recent
     const reviewDates = await db
         .selectFrom('reviews')
-        .select(sql<string>`DISTINCT DATE(reviewed_at)`.as('review_date'))
-        .orderBy(sql`DATE(reviewed_at)`, 'desc')
+        .select(sql<string>`DISTINCT TO_CHAR(reviewed_at, 'YYYY-MM-DD')`.as('review_date'))
+        .orderBy(sql`TO_CHAR(reviewed_at, 'YYYY-MM-DD')`, 'desc')
         .limit(365)
         .execute();
 
@@ -109,11 +109,11 @@ async function getReviewsByDate(): Promise<Record<string, number>> {
     const reviews = await db
         .selectFrom('reviews')
         .select([
-            sql<string>`DATE(reviewed_at)`.as('date'),
+            sql<string>`TO_CHAR(reviewed_at, 'YYYY-MM-DD')`.as('date'),
             sql<number>`count(*)::int`.as('count'),
         ])
         .where('reviewed_at', '>=', oneYearAgo)
-        .groupBy(sql`DATE(reviewed_at)`)
+        .groupBy(sql`TO_CHAR(reviewed_at, 'YYYY-MM-DD')`)
         .execute();
 
     const result: Record<string, number> = {};
