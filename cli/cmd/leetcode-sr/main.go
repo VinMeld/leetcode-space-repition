@@ -88,6 +88,8 @@ Examples:
 `)
 }
 
+var getClientFunc = getClient
+
 func getClient() (*api.Client, error) {
 	cfg, err := config.Load()
 	if err != nil {
@@ -231,7 +233,7 @@ func cmdConfig() {
 }
 
 func cmdList(dueOnly bool) {
-	client, err := getClient()
+	client, err := getClientFunc()
 	if err != nil {
 		tui.PrintError(err.Error())
 		return
@@ -257,7 +259,7 @@ func cmdList(dueOnly bool) {
 }
 
 func cmdStats() {
-	client, err := getClient()
+	client, err := getClientFunc()
 	if err != nil {
 		tui.PrintError(err.Error())
 		return
@@ -291,7 +293,7 @@ func cmdReview() {
 		return
 	}
 
-	client, err := getClient()
+	client, err := getClientFunc()
 	if err != nil {
 		tui.PrintError(err.Error())
 		return

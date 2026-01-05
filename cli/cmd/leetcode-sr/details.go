@@ -20,7 +20,7 @@ func cmdDetails() {
 		return
 	}
 
-	client, err := getClient()
+	client, err := getClientFunc()
 	if err != nil {
 		tui.PrintError(err.Error())
 		return

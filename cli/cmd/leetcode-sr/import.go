@@ -11,6 +11,8 @@ import (
 	"github.com/vinmeld/leetcode-sr-cli/internal/tui"
 )
 
+var ankiNewClientFunc = anki.NewClient
+
 func cmdImport(source string) {
 	if source != "anki" {
 		tui.PrintError("Only 'anki' source is supported currently")
@@ -18,7 +20,7 @@ func cmdImport(source string) {
 	}
 
 	tui.PrintInfo("Connecting to Anki...")
-	ankiClient := anki.NewClient("") // Use default localhost:8765
+	ankiClient := ankiNewClientFunc("") // Use default localhost:8765
 
 	// Find cards in LeetCode deck
 	// Try "deck:LeetCode" first, if empty try generic
