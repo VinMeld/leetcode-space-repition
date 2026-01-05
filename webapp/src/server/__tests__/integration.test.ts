@@ -220,8 +220,8 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
-            // Parse superjson response
-            const problems = superjson.parse(response.text) as any[];
+            // Use plain JSON response
+            const problems = response.body as any[];
             expect(Array.isArray(problems)).toBe(true);
             expect(problems.length).toBe(1);
             expect(problems[0].title).toBe('Two Sum');
@@ -255,7 +255,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
                 .get('/api/problems')
                 .set('Authorization', `Bearer ${authToken}`);
 
-            const problems = superjson.parse(listResponse.text) as any[];
+            const problems = listResponse.body as any[];
             const updatedProblem = problems[0];
             expect(updatedProblem.repetitions).toBeGreaterThan(0);
         });
@@ -287,7 +287,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
                 .get('/api/problems')
                 .set('Authorization', `Bearer ${authToken}`);
 
-            const problems = superjson.parse(listResponse.text) as any[];
+            const problems = listResponse.body as any[];
             expect(problems.length).toBe(0);
         });
     });
@@ -330,8 +330,8 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
-            // Parse superjson response
-            const stats = superjson.parse(response.text) as any;
+            // Use plain JSON response
+            const stats = response.body as any;
             expect(stats.totalProblems).toBe(2);
             expect(stats.problemsByDifficulty.easy).toBe(1);
             expect(stats.problemsByDifficulty.hard).toBe(1);

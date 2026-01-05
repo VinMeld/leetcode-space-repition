@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { db } from '../../helpers/db';
 import { isDueToday } from '../../lib/sm2';
-import superjson from 'superjson';
 
 export async function listProblems(_req: Request, res: Response) {
     try {
@@ -17,10 +16,8 @@ export async function listProblems(_req: Request, res: Response) {
             isDueToday: isDueToday(problem.next_review_date),
         }));
 
-        // Use superjson to handle Date serialization
-        const serialized = superjson.stringify(problemsWithDueFlag);
-        res.setHeader('Content-Type', 'application/json');
-        res.send(serialized);
+        // Return plain JSON for CLI compatibility
+        res.json(problemsWithDueFlag);
     } catch (error) {
         console.error('Error listing problems:', error);
         res.status(500).json({ error: 'Failed to fetch problems' });

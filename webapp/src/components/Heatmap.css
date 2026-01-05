@@ -73,23 +73,24 @@
 }
 
 .heatmap-level-0 {
-    background: var(--color-heatmap-0);
+    background: #1e293b;
+    border: 1px solid #334155;
 }
 
 .heatmap-level-1 {
-    background: var(--color-heatmap-1);
+    background: #1e40af;
 }
 
 .heatmap-level-2 {
-    background: var(--color-heatmap-2);
+    background: #2563eb;
 }
 
 .heatmap-level-3 {
-    background: var(--color-heatmap-3);
+    background: #3b82f6;
 }
 
 .heatmap-level-4 {
-    background: var(--color-heatmap-4);
+    background: #60a5fa;
 }
 
 .heatmap-legend {

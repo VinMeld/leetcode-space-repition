@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { db } from '../helpers/db';
 import { sql } from 'kysely';
-import superjson from 'superjson';
 
 export async function getStats(_req: Request, res: Response) {
     try {
@@ -55,9 +54,8 @@ export async function getStats(_req: Request, res: Response) {
             problemsByDifficulty: difficultyBreakdown,
         };
 
-        const serialized = superjson.stringify(stats);
-        res.setHeader('Content-Type', 'application/json');
-        res.send(serialized);
+        // Return plain JSON for CLI compatibility
+        res.json(stats);
     } catch (error) {
         console.error('Error fetching stats:', error);
         res.status(500).json({ error: 'Failed to fetch statistics' });
