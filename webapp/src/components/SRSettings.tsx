@@ -37,10 +37,10 @@ export function SRSettings({ onClose }: SRSettingsProps) {
 
         setIsChangingPassword(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
             const token = localStorage.getItem('token');
 
-            const res = await fetch(`${apiUrl}/api/auth/change-password`, {
+            const res = await fetch(`${apiUrl}/auth/change-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -240,9 +240,9 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                         onClick={async () => {
                             if (confirm('This will recalculate intervals for ALL problems based on your current settings. Continue?')) {
                                 try {
-                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
                                     const token = localStorage.getItem('token');
-                                    const res = await fetch(`${apiUrl}/api/problems/reschedule`, {
+                                    const res = await fetch(`${apiUrl}/problems/reschedule`, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -275,9 +275,9 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                         onClick={async () => {
                             if (confirm('Are you sure you want to delete ALL your problems and review history? This cannot be undone.')) {
                                 try {
-                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
                                     const token = localStorage.getItem('token');
-                                    const res = await fetch(`${apiUrl}/api/problems/delete-all`, {
+                                    const res = await fetch(`${apiUrl}/problems/delete-all`, {
                                         method: 'POST',
                                         headers: {
                                             'Authorization': `Bearer ${token}`

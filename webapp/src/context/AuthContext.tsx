@@ -49,9 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const login = (provider: 'google' | 'github', cliPort?: string) => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const query = cliPort ? `?cli_port=${cliPort}` : '';
-        window.location.href = `${apiUrl}/api/auth/${provider}${query}`;
+        window.location.href = `${apiUrl}/auth/${provider}${query}`;
     };
 
     return (
