@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -181,5 +182,50 @@ func TestPrintStats(t *testing.T) {
 	})
 	if output == "" {
 		t.Error("PrintStats produced no output")
+	}
+}
+
+func TestPrintProblemHyperlink(t *testing.T) {
+	// Save original TERM
+	origTerm := os.Getenv("TERM")
+	defer os.Setenv("TERM", origTerm)
+
+	problem := api.Problem{
+		ID:          1,
+		Title:       "Test Problem",
+		LeetcodeURL: "http://example.com",
+		Difficulty:  "easy",
+	}
+
+	tests := []struct {
+		name     string
+		term     string
+		wantLink string
+	}{
+		{
+			name:     "Standard Terminal",
+			term:     "xterm-256color",
+			wantLink: "\x1b]8;;http://example.com\x1b\\Test Problem\x1b]8;;\x1b\\",
+		},
+		{
+			name: "Tmux Terminal",
+			term: "tmux-256color",
+			// Expected: \x1bPtmux;\x1b\x1b]8;;http://example.com\x1b\x1b\\Test Problem\x1b\x1b]8;;\x1b\x1b\\\x1b\\
+			// Note: Go string literals require escaping backslashes
+			wantLink: "\x1bPtmux;\x1b\x1b]8;;http://example.com\x1b\x1b\\Test Problem\x1b\x1b]8;;\x1b\x1b\\\x1b\\",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.Setenv("TERM", tt.term)
+			output := captureOutput(func() {
+				PrintProblem(problem, false)
+			})
+
+			if !strings.Contains(output, tt.wantLink) {
+				t.Errorf("PrintProblem() output does not contain expected link for TERM=%s.\nGot: %q\nWant substring: %q", tt.term, output, tt.wantLink)
+			}
+		})
 	}
 }

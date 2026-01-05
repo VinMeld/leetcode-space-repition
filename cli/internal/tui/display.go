@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -45,12 +46,21 @@ func PrintProblem(p api.Problem, showURL bool) {
 
 	// Create hyperlink for title
 	// OSC 8 ; params ; url ST title OSC 8 ; ; ST
-	title := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", p.LeetcodeURL, p.Title)
+	link := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", p.LeetcodeURL, p.Title)
+
+	// Check for tmux/screen and wrap if necessary
+	term := os.Getenv("TERM")
+	if strings.HasPrefix(term, "screen") || strings.HasPrefix(term, "tmux") {
+		// Wrap in DCS sequence for tmux: \x1bPtmux;... \x1b\\
+		// We need to double escape the escape characters inside
+		link = strings.ReplaceAll(link, "\x1b", "\x1b\x1b")
+		link = fmt.Sprintf("\x1bPtmux;%s\x1b\\", link)
+	}
 
 	fmt.Printf("%s%s#%d%s %s%s%s %s[%s%s%s]%s\n",
 		dueStatus,
 		Gray, p.ID, Reset,
-		Bold, title, Reset,
+		Bold, link, Reset,
 		Gray, diffColor, p.Difficulty, Gray, Reset,
 	)
 
