@@ -191,6 +191,9 @@ describe('Auth API Endpoints', () => {
         });
 
         it('should allow access with valid token', async () => {
+            const { db } = await import('../../helpers/db');
+            (db.executeTakeFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: 1, email: 'test@example.com' });
+
             const response = await request(app)
                 .get('/api/problems')
                 .set('Authorization', 'Bearer valid_token');

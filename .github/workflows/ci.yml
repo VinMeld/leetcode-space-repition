@@ -81,6 +81,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Start Test Database
+        run: npm run db:test:start
+
       - name: Run tests
         run: npm run test
 
