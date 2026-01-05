@@ -19,9 +19,7 @@ services:
 
   # Backend API server
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: meldrum123454/leetcode-sr-api
     container_name: leetcode-sr-api
     environment:
       DATABASE_URL: postgresql://leetcode:leetcode_dev@db:5432/leetcode_sr
@@ -40,9 +38,7 @@ services:
 
   # Frontend (Vite/React with nginx)
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    image: meldrum123454/leetcode-sr-frontend
     container_name: leetcode-sr-frontend
     ports:
       - "3000:80"

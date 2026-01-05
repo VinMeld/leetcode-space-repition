@@ -118,12 +118,14 @@ The web application provides a beautiful dashboard, heatmap, and management inte
     ```bash
     cp webapp/.env.example webapp/.env
     ```
-3.  Start the services:
+3.  Start the services (uses pre-built images):
     ```bash
     cd webapp
     docker-compose up -d
     ```
 4.  Visit `http://localhost:5173`.
+
+> **Note**: The docker-compose setup uses pre-built images `meldrum123454/leetcode-sr-api` and `meldrum123454/leetcode-sr-frontend`.
 
 ### Environment Variables
 Check `webapp/.env.example` for all available configuration options. Key variables include:
