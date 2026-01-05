@@ -27,6 +27,7 @@ const handleLoginSuccess = (req: express.Request, res: express.Response) => {
 
 // Register (Local)
 router.post('/register', async (req, res) => {
+    console.log('[AuthRoutes] Register request received');
     try {
         const { email, password, displayName } = req.body;
 

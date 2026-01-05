@@ -33,6 +33,13 @@ app.use(passport.initialize());
 
 // Auth Middleware
 const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.log(`[AuthMiddleware] Checking auth for: ${req.method} ${req.path}`);
+
+    // Skip auth check for auth routes (they handle their own security)
+    if (req.path.startsWith('/auth')) {
+        return next();
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).json({ error: 'No authorization header' });
