@@ -34,6 +34,9 @@ COPY src/server ./src/server
 COPY src/helpers ./src/helpers
 COPY src/lib ./src/lib
 
+# Copy migrations into the container
+COPY migrations ./migrations
+
 # Install tsx for running TypeScript
 RUN npm install tsx
 
@@ -48,5 +51,5 @@ ENV PORT=3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
-# Start server
-CMD ["npx", "tsx", "src/server/index.ts"]
+# Start server with migrations
+CMD ["sh", "-c", "npx tsx src/server/migrate.ts && npx tsx src/server/index.ts"]

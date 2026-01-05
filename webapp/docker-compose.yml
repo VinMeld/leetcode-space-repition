@@ -9,7 +9,6 @@ services:
       POSTGRES_DB: leetcode_sr
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -39,7 +38,7 @@ services:
       timeout: 3s
       retries: 3
 
-  # Frontend (Vite/React)
+  # Frontend (Vite/React with nginx)
   frontend:
     build:
       context: .
