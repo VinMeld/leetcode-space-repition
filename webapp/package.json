@@ -15,6 +15,9 @@
     "test:coverage": "vitest run --coverage",
     "db:start": "docker compose -f docker-compose.dev.yml up -d",
     "db:stop": "docker compose -f docker-compose.dev.yml down",
+    "db:test:start": "docker compose -f docker-compose.test.yml up -d && sleep 3",
+    "db:test:stop": "docker compose -f docker-compose.test.yml down",
+    "test:integration": "TEST_DATABASE_URL=postgresql://leetcode_test:test_password@localhost:5433/leetcode_sr_test vitest run src/server/__tests__/integration.test.ts",
     "migrate": "tsx src/server/migrate.ts"
   },
   "dependencies": {
