@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import superjson from 'superjson';
 
 const API_BASE = '/api';
 
@@ -53,8 +52,7 @@ async function fetchProblems(): Promise<Problem[]> {
         headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch problems');
-    const text = await res.text();
-    return superjson.parse(text);
+    return res.json();
 }
 
 async function fetchStats(): Promise<Stats> {
@@ -62,8 +60,7 @@ async function fetchStats(): Promise<Stats> {
         headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch stats');
-    const text = await res.text();
-    return superjson.parse(text);
+    return res.json();
 }
 
 async function createProblem(data: CreateProblemData): Promise<void> {

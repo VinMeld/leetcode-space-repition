@@ -10,9 +10,10 @@ export async function listProblems(_req: Request, res: Response) {
             .orderBy('next_review_date', 'asc')
             .execute();
 
-        // Add isDueToday flag to each problem
+        // Add isDueToday flag to each problem and ensure numeric types
         const problemsWithDueFlag = problems.map(problem => ({
             ...problem,
+            easiness_factor: Number(problem.easiness_factor),
             isDueToday: isDueToday(problem.next_review_date),
         }));
 

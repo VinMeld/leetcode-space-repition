@@ -106,3 +106,102 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr-frontend:${{ steps.version.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Update Homebrew tap formula
+  homebrew-update:
+    name: Update Homebrew Tap
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download release assets and calculate SHA256
+        id: sha256
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          
+          # Download all platform archives
+          wget -q "https://github.com/VinMeld/leetcode-space-repition/releases/download/${TAG}/leetcode-sr_${VERSION}_darwin_arm64.tar.gz"
+          wget -q "https://github.com/VinMeld/leetcode-space-repition/releases/download/${TAG}/leetcode-sr_${VERSION}_darwin_amd64.tar.gz"
+          wget -q "https://github.com/VinMeld/leetcode-space-repition/releases/download/${TAG}/leetcode-sr_${VERSION}_linux_arm64.tar.gz"
+          wget -q "https://github.com/VinMeld/leetcode-space-repition/releases/download/${TAG}/leetcode-sr_${VERSION}_linux_amd64.tar.gz"
+          
+          # Calculate SHA256 hashes
+          echo "darwin_arm64_sha=$(shasum -a 256 leetcode-sr_${VERSION}_darwin_arm64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "darwin_amd64_sha=$(shasum -a 256 leetcode-sr_${VERSION}_darwin_amd64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_arm64_sha=$(shasum -a 256 leetcode-sr_${VERSION}_linux_arm64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_amd64_sha=$(shasum -a 256 leetcode-sr_${VERSION}_linux_amd64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Checkout homebrew-tap
+        uses: actions/checkout@v4
+        with:
+          repository: VinMeld/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update Homebrew formula
+        run: |
+          mkdir -p homebrew-tap/Formula
+          cat > homebrew-tap/Formula/leetcode-sr.rb << 'EOF'
+          class LeetcodeSr < Formula
+            desc "CLI for LeetCode spaced repetition practice"
+            homepage "https://github.com/VinMeld/leetcode-space-repition"
+            version "${{ steps.version.outputs.version }}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/VinMeld/leetcode-space-repition/releases/download/${{ steps.version.outputs.tag }}/leetcode-sr_${{ steps.version.outputs.version }}_darwin_arm64.tar.gz"
+                sha256 "${{ steps.sha256.outputs.darwin_arm64_sha }}"
+              end
+              on_intel do
+                url "https://github.com/VinMeld/leetcode-space-repition/releases/download/${{ steps.version.outputs.tag }}/leetcode-sr_${{ steps.version.outputs.version }}_darwin_amd64.tar.gz"
+                sha256 "${{ steps.sha256.outputs.darwin_amd64_sha }}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/VinMeld/leetcode-space-repition/releases/download/${{ steps.version.outputs.tag }}/leetcode-sr_${{ steps.version.outputs.version }}_linux_arm64.tar.gz"
+                sha256 "${{ steps.sha256.outputs.linux_arm64_sha }}"
+              end
+              on_intel do
+                url "https://github.com/VinMeld/leetcode-space-repition/releases/download/${{ steps.version.outputs.tag }}/leetcode-sr_${{ steps.version.outputs.version }}_linux_amd64.tar.gz"
+                sha256 "${{ steps.sha256.outputs.linux_amd64_sha }}"
+              end
+            end
+
+            def install
+              bin.install "leetcode-sr"
+            end
+
+            test do
+              assert_match "leetcode-sr", shell_output("#{bin}/leetcode-sr --help 2>&1")
+            end
+
+            def caveats
+              <<~EOS
+                To get started with leetcode-sr:
+                  1. Configure: leetcode-sr config
+                  2. Login: leetcode-sr login
+                  
+                Documentation: https://github.com/VinMeld/leetcode-space-repition
+              EOS
+            end
+          end
+          EOF
+
+      - name: Commit and push to homebrew-tap
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/leetcode-sr.rb
+          git commit -m "Update leetcode-sr to ${{ steps.version.outputs.version }}"
+          git push
