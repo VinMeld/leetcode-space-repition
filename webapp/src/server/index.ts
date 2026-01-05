@@ -4,6 +4,7 @@ import cors from 'cors';
 import passport from './auth-passport';
 import authRoutes from './routes/auth';
 import { verifyToken } from './jwt';
+import { db } from '../helpers/db';
 import { listProblems } from './problems/list';
 import { createProblem } from './problems/create';
 import { reviewProblem } from './problems/review';
@@ -32,7 +33,7 @@ app.use(express.json());
 app.use(passport.initialize());
 
 // Auth Middleware
-const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.log(`[AuthMiddleware] Checking auth for: ${req.method} ${req.path}`);
 
     // Skip auth check for auth routes (they handle their own security)
@@ -50,13 +51,28 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
         return res.status(401).json({ error: 'No token provided' });
     }
 
-    const user = verifyToken(token);
-    if (!user) {
+    const payload = verifyToken(token);
+    if (!payload || typeof payload === 'string') {
         return res.status(401).json({ error: 'Invalid token' });
     }
 
-    req.user = user;
-    next();
+    try {
+        const user = await db
+            .selectFrom('users')
+            .selectAll()
+            .where('id', '=', (payload as { id: number }).id)
+            .executeTakeFirst();
+
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Auth middleware error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 };
 
 // Public Routes
