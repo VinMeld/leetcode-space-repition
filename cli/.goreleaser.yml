@@ -1,5 +1,3 @@
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-
 version: 2
 
 project_name: leetcode-sr
@@ -23,40 +21,61 @@ builds:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - id: default
-    format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  - id: archlinux
-    format: tar.zst
-    builds:
-      - leetcode-sr
-    files:
-      - none*
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    filters:
-      goos:
-        - linux
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
 
 checksum:
-  name_template: "checksums.txt"
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
 
-release:
-  github:
-    owner: VinMeld
-    name: leetcode-space-repition
-  draft: false
-  prerelease: auto
+nfpms:
+  - id: leetcode-sr-pkg
+    package_name: leetcode-sr
+    builds:
+      - leetcode-sr
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: VinMeld
+    homepage: https://github.com/VinMeld/leetcode-space-repition
+    maintainer: Vinay <vinaymeldrum@gmail.com>
+    description: CLI for LeetCode Spaced Repetition Tracker
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+    bindir: /usr/bin
+
+aurs:
+  - name: leetcode-sr-bin
+    homepage: https://github.com/VinMeld/leetcode-space-repition
+    description: CLI for LeetCode Spaced Repetition Tracker (Binary)
+    maintainers:
+      - "Vinay <vinaymeldrum@gmail.com>"
+    license: "MIT"
+    private_key: '{{ .Env.AUR_SSH_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/leetcode-sr-bin.git'
+    conflicts:
+      - leetcode-sr
+      - leetcode-sr-git
+    provides:
+      - leetcode-sr
+    package: |-
+      # bin
+      install -Dm755 "./leetcode-sr" "${pkgdir}/usr/bin/leetcode-sr"
 
 # Homebrew tap (requires HOMEBREW_TAP_TOKEN secret)
 brews:
@@ -72,16 +91,3 @@ brews:
       bin.install "leetcode-sr"
     test: |
       system "#{bin}/leetcode-sr", "--version"
-
-# AUR package (requires AUR_SSH_KEY secret)
-aurs:
-  - name: leetcode-sr-bin
-    homepage: "https://github.com/VinMeld/leetcode-space-repition"
-    description: "CLI for LeetCode Spaced Repetition Tracker"
-    maintainers:
-      - "VinMeld"
-    license: "MIT"
-    private_key: "{{ .Env.AUR_SSH_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/leetcode-sr-bin.git"
-    package: |
-      install -Dm755 "./leetcode-sr" "${pkgdir}/usr/bin/leetcode-sr"
