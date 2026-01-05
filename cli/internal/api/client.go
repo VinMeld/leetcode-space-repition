@@ -90,9 +90,13 @@ func (c *Client) request(method, endpoint string, body interface{}) ([]byte, err
 
 	if resp.StatusCode >= 400 {
 		var errResp struct {
-			Error string `json:"error"`
+			Error   string      `json:"error"`
+			Details interface{} `json:"details"`
 		}
 		if err := json.Unmarshal(respBody, &errResp); err == nil && errResp.Error != "" {
+			if errResp.Details != nil {
+				return nil, fmt.Errorf("API error: %s - %v", errResp.Error, errResp.Details)
+			}
 			return nil, fmt.Errorf("API error: %s", errResp.Error)
 		}
 		return nil, fmt.Errorf("API error: HTTP %d", resp.StatusCode)

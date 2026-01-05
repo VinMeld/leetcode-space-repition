@@ -137,7 +137,7 @@ func cmdImport(source string) {
 		// This effectively "reviews" the card today and sets the next review based on current interval.
 		// This is safe.
 		nextReview := time.Now().Add(time.Duration(card.Interval) * 24 * time.Hour)
-		req.NextReviewDate = nextReview.Format(time.RFC3339)
+		req.NextReviewDate = nextReview.UTC().Format(time.RFC3339)
 
 		err := apiClient.CreateProblem(req)
 		if err != nil {
