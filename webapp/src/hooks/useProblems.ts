@@ -72,7 +72,7 @@ async function createProblem(data: CreateProblemData): Promise<void> {
     if (!res.ok) throw new Error('Failed to create problem');
 }
 
-async function reviewProblem(data: { problemId: number; quality: number }): Promise<void> {
+async function reviewProblem(data: { problemId: number; quality: number; sameDayRetry?: boolean }): Promise<void> {
     const res = await fetch(`${API_BASE}/problems/review`, {
         method: 'POST',
         headers: getHeaders(),

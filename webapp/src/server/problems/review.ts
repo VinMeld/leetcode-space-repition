@@ -6,6 +6,7 @@ import { calculateSM2 } from '../../lib/sm2';
 const reviewSchema = z.object({
     problemId: z.number().int().positive(),
     quality: z.number().int().min(0).max(5),
+    sameDayRetry: z.boolean().optional(),
 });
 
 export async function reviewProblem(req: Request, res: Response) {
@@ -19,7 +20,7 @@ export async function reviewProblem(req: Request, res: Response) {
             });
         }
 
-        const { problemId, quality } = validation.data;
+        const { problemId, quality, sameDayRetry } = validation.data;
 
         // Get current problem state
         const problem = await db
@@ -38,6 +39,7 @@ export async function reviewProblem(req: Request, res: Response) {
             easinessFactor: Number(problem.easiness_factor),
             interval: problem.interval,
             repetitions: problem.repetitions,
+            sameDayRetry,
         });
 
         // Update problem with new values

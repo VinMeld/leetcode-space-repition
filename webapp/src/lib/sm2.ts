@@ -17,6 +17,7 @@ export interface SM2Input {
     easinessFactor: number;  // Current EF (typically starts at 2.5)
     interval: number;  // Current interval in days
     repetitions: number;  // Number of successful repetitions
+    sameDayRetry?: boolean; // Whether to retry today if quality < 3
 }
 
 /**
@@ -31,7 +32,7 @@ export interface SM2Input {
  * 5 - Perfect response
  */
 export function calculateSM2(input: SM2Input): SM2Result {
-    const { quality, easinessFactor: currentEF, interval: currentInterval, repetitions: currentReps } = input;
+    const { quality, easinessFactor: currentEF, interval: currentInterval, repetitions: currentReps, sameDayRetry } = input;
 
     let newEF = currentEF;
     let newInterval: number;
@@ -57,7 +58,9 @@ export function calculateSM2(input: SM2Input): SM2Result {
     } else {
         // Failed recall - reset
         newRepetitions = 0;
-        newInterval = 1;
+        // If sameDayRetry is enabled and quality is low (< 3), set interval to 0 (due immediately)
+        // Otherwise set to 1 day
+        newInterval = (sameDayRetry && quality < 3) ? 0 : 1;
         // EF remains unchanged on failure
     }
 

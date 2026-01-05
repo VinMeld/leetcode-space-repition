@@ -43,10 +43,14 @@ func PrintProblem(p api.Problem, showURL bool) {
 
 	diffColor := DifficultyColor(p.Difficulty)
 
+	// Create hyperlink for title
+	// OSC 8 ; params ; url ST title OSC 8 ; ; ST
+	title := fmt.Sprintf("\x1b]8;;%s\x1b\\%s\x1b]8;;\x1b\\", p.LeetcodeURL, p.Title)
+
 	fmt.Printf("%s%s#%d%s %s%s%s %s[%s%s%s]%s\n",
 		dueStatus,
 		Gray, p.ID, Reset,
-		Bold, p.Title, Reset,
+		Bold, title, Reset,
 		Gray, diffColor, p.Difficulty, Gray, Reset,
 	)
 

@@ -73,6 +73,7 @@ Commands:
   all              Show all tracked problems
   stats            Show statistics
   review <id> <q>  Rate a problem (quality 0-5)
+  import <source>  Import problems from source (e.g. anki)
   version          Show version
   help             Show this help
 

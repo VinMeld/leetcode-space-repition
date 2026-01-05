@@ -20,6 +20,7 @@ import {
     useDeleteProblem,
 } from '../hooks/useProblems';
 import type { CreateProblemData } from '../hooks/useProblems';
+import { loadSettings } from '../lib/settings';
 import './Dashboard.css';
 
 export const Dashboard: React.FC = () => {
@@ -77,7 +78,12 @@ export const Dashboard: React.FC = () => {
     const handleReview = async (problemId: number, quality: number) => {
         setReviewingProblem(problemId);
         try {
-            await reviewProblem.mutateAsync({ problemId, quality });
+            const settings = loadSettings();
+            await reviewProblem.mutateAsync({
+                problemId,
+                quality,
+                sameDayRetry: settings.sameDayRetry
+            });
             const qualityMessage = quality >= 3 ? 'Great job!' : 'Keep practicing!';
             toast.success(`Review recorded. ${qualityMessage}`);
         } catch {
