@@ -15,18 +15,24 @@ import { Dialog } from '../components/ui/Dialog';
 import {
     useProblems,
     useStats,
+    type Problem,
 } from '../hooks/useProblems';
 import type { CreateProblemData } from '../hooks/useProblems';
 import { ProblemDetails } from '../components/ProblemDetails';
 import { loadSettings } from '../lib/settings';
 import './Dashboard.css';
 
+type UIProblem = Omit<Problem, 'next_review_date' | 'notes'> & {
+    next_review_date: Date;
+    notes: string | null;
+};
+
 export const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('due');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isAnkiImportOpen, setIsAnkiImportOpen] = useState(false);
     const [reviewingProblem, setReviewingProblem] = useState<number | null>(null);
-    const [selectedProblem, setSelectedProblem] = useState<any>(null); // Fix: Add state for selected problem
+    const [selectedProblem, setSelectedProblem] = useState<UIProblem | null>(null);
 
     const { problems: problemsQuery, createProblem, reviewProblem, deleteProblem } = useProblems();
     const { data: problems = [], isLoading: problemsLoading } = problemsQuery;
@@ -83,7 +89,7 @@ export const Dashboard: React.FC = () => {
             });
             const qualityMessage = quality >= 3 ? 'Great job!' : 'Keep practicing!';
             toast.success(`Review recorded. ${qualityMessage}`);
-        } catch (error) {
+        } catch {
             toast.error('Failed to record review');
         } finally {
             setReviewingProblem(null);

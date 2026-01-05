@@ -8,11 +8,13 @@ interface Problem {
     title: string;
     leetcode_url: string;
     difficulty: 'easy' | 'medium' | 'hard';
-    notes?: string | null;
+    notes: string | null;
     next_review_date: Date;
     interval: number;
     repetitions: number;
-    isDueToday?: boolean;
+    isDueToday: boolean;
+    created_at: string;
+    easiness_factor: number;
 }
 
 interface SRAllProblemsProps {

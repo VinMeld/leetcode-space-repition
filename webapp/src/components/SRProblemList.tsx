@@ -15,6 +15,7 @@ interface Problem {
     repetitions: number;
     easiness_factor: number;
     isDueToday: boolean;
+    created_at: string;
 }
 
 interface SRProblemListProps {

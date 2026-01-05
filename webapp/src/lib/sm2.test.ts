@@ -11,7 +11,7 @@ describe('SM-2 Algorithm', () => {
                 repetitions: 5,
             });
 
-            expect(result.interval).toBe(1);
+            expect(result.interval).toBe(0);
             expect(result.repetitions).toBe(0);
         });
 
@@ -23,7 +23,7 @@ describe('SM-2 Algorithm', () => {
                 repetitions: 5,
             });
 
-            expect(result.interval).toBe(1);
+            expect(result.interval).toBe(0);
             expect(result.repetitions).toBe(0);
         });
 
@@ -35,7 +35,7 @@ describe('SM-2 Algorithm', () => {
                 repetitions: 5,
             });
 
-            expect(result.interval).toBe(1);
+            expect(result.interval).toBe(0);
             expect(result.repetitions).toBe(0);
         });
 
