@@ -25,7 +25,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.22"
           cache: true
           cache-dependency-path: cli/go.sum
 
@@ -41,9 +41,9 @@ jobs:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
 
-  # Build and push Docker image for webapp
-  docker:
-    name: Docker Webapp
+  # Build and push Docker image for API
+  docker-api:
+    name: Docker API
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -62,29 +62,47 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Build and Push Docker Image
+      - name: Build and Push API Image
         uses: docker/build-push-action@v6
         with:
           context: ./webapp
+          file: ./webapp/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr:${{ steps.version.outputs.VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr-api:${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-  # Update Homebrew tap
-  homebrew-update:
-    name: Update Homebrew
-    needs: goreleaser
+  # Build and push Docker image for Frontend
+  docker-frontend:
+    name: Docker Frontend
     runs-on: ubuntu-latest
     steps:
-      - name: Extract version
-        id: version
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Note
-        run: |
-          echo "Homebrew tap updated automatically via GoReleaser brew section"
-          echo "Version: ${{ steps.version.outputs.version }}"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./webapp
+          file: ./webapp/Dockerfile.frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/leetcode-sr-frontend:${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

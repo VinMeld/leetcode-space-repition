@@ -18,7 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Webapp API server
+  # Backend API server
   api:
     build:
       context: .
@@ -38,6 +38,19 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+
+  # Frontend (Vite/React)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: leetcode-sr-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:3001
 
 volumes:
   postgres_data:
