@@ -70,7 +70,7 @@ aurs:
     git_url: 'ssh://aur@aur.archlinux.org/leetcode-sr-bin.git'
     # Skip upload until the AUR package is created manually
     # Set to false once leetcode-sr-bin exists on AUR and AUR_SSH_KEY is configured
-    skip_upload: true
+    skip_upload: false
     conflicts:
       - leetcode-sr
       - leetcode-sr-git
