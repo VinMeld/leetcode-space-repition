@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, BookOpen, Flame, Target } from 'lucide-react';
+import { Clock, BookOpen, Flame, Target, LogOut } from 'lucide-react';
 import './SRHeader.css';
 
 interface SRHeaderProps {
@@ -7,6 +7,7 @@ interface SRHeaderProps {
     totalProblems: number;
     streak: number;
     totalReviews: number;
+    onLogout?: () => void;
 }
 
 export const SRHeader: React.FC<SRHeaderProps> = ({
@@ -14,6 +15,7 @@ export const SRHeader: React.FC<SRHeaderProps> = ({
     totalProblems,
     streak,
     totalReviews,
+    onLogout,
 }) => {
     return (
         <div className="sr-header">
@@ -58,6 +60,13 @@ export const SRHeader: React.FC<SRHeaderProps> = ({
                     </div>
                 </div>
             </div>
+
+            {onLogout && (
+                <button className="sr-logout-btn" onClick={onLogout} title="Logout">
+                    <LogOut size={20} />
+                    <span>Logout</span>
+                </button>
+            )}
         </div>
     );
 };

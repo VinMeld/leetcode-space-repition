@@ -70,7 +70,27 @@
 }
 
 .sr-stat-label {
-    font-size: var(--font-size-sm);
+    font-size: 0.75rem;
     color: var(--color-text-secondary);
-    margin-top: var(--space-1);
+    white-space: nowrap;
+}
+
+.sr-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--color-danger);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.sr-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
 }

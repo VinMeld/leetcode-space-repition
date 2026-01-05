@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, BookOpen, BarChart3, Plus, Settings, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '../components/AppLayout';
@@ -20,6 +21,7 @@ import {
 import type { CreateProblemData } from '../hooks/useProblems';
 import { ProblemDetails } from '../components/ProblemDetails';
 import { loadSettings } from '../lib/settings';
+import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 type UIProblem = Omit<Problem, 'next_review_date' | 'notes'> & {
@@ -28,6 +30,8 @@ type UIProblem = Omit<Problem, 'next_review_date' | 'notes'> & {
 };
 
 export const Dashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const { logout } = useAuth();
     const [activeTab, setActiveTab] = useState('due');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isAnkiImportOpen, setIsAnkiImportOpen] = useState(false);
@@ -37,6 +41,11 @@ export const Dashboard: React.FC = () => {
     const { problems: problemsQuery, createProblem, reviewProblem, deleteProblem } = useProblems();
     const { data: problems = [], isLoading: problemsLoading } = problemsQuery;
     const { data: stats } = useStats();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const dueCount = problems.filter(p => p.isDueToday).length;
 
@@ -115,6 +124,7 @@ export const Dashboard: React.FC = () => {
                     totalProblems={stats?.totalProblems || problems.length}
                     streak={stats?.streakDays || 0}
                     totalReviews={stats?.totalReviews || 0}
+                    onLogout={handleLogout}
                 />
 
                 <div className="dashboard-toolbar">
