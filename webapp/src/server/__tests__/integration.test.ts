@@ -34,6 +34,13 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
         // Run migrations to set up schema
         try {
+            // Drop existing tables to ensure schema is up-to-date
+            await pool.query(`
+                DROP TABLE IF EXISTS reviews CASCADE;
+                DROP TABLE IF EXISTS problems CASCADE;
+                DROP TABLE IF EXISTS users CASCADE;
+            `);
+
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS users(
     id SERIAL PRIMARY KEY,
@@ -48,6 +55,7 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
                 CREATE TABLE IF NOT EXISTS problems(
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
+    order_num INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
     leetcode_url VARCHAR(500) NOT NULL,
     difficulty VARCHAR(20) NOT NULL,
@@ -308,6 +316,161 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
 
             const problems = listResponse.body as { repetitions: number }[];
             expect(problems.length).toBe(0);
+        });
+
+        it('should get problem details', async () => {
+            // Create a problem
+            const createResponse = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Details Test',
+                    leetcodeUrl: 'https://leetcode.com/problems/details-test',
+                    difficulty: 'hard',
+                });
+
+            const problemId = createResponse.body.problem.id;
+            const orderNum = createResponse.body.problem.order_num;
+
+            // Review the problem to create some history
+            await request(app)
+                .post('/api/problems/review')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    problemId,
+                    quality: 4,
+                });
+
+            // Get details by order_num (API now uses order_num for lookup)
+            const detailsResponse = await request(app)
+                .get(`/api/problems/${orderNum}/details`)
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(detailsResponse.status).toBe(200);
+            expect(detailsResponse.body.problem).toBeDefined();
+            expect(detailsResponse.body.problem.title).toBe('Details Test');
+            expect(detailsResponse.body.problem.difficulty).toBe('hard');
+            expect(detailsResponse.body.reviews).toBeDefined();
+            expect(Array.isArray(detailsResponse.body.reviews)).toBe(true);
+            expect(detailsResponse.body.reviews.length).toBe(1);
+            expect(detailsResponse.body.stats).toBeDefined();
+            expect(detailsResponse.body.stats.totalReviews).toBe(1);
+        });
+
+        it('should return 404 for non-existent problem details', async () => {
+            const response = await request(app)
+                .get('/api/problems/999999/details')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(response.status).toBe(404);
+            expect(response.body.error).toBe('Problem not found');
+        });
+
+        it('should assign sequential order numbers and lookup by order_num', async () => {
+            // Create first problem
+            const createResponse1 = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'First Problem',
+                    leetcodeUrl: 'https://leetcode.com/problems/first',
+                    difficulty: 'easy',
+                });
+
+            expect(createResponse1.status).toBe(201);
+            expect(createResponse1.body.problem.order_num).toBe(1);
+
+            // Create second problem
+            const createResponse2 = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Second Problem',
+                    leetcodeUrl: 'https://leetcode.com/problems/second',
+                    difficulty: 'medium',
+                });
+
+            expect(createResponse2.status).toBe(201);
+            expect(createResponse2.body.problem.order_num).toBe(2);
+
+            // List problems should include order_num
+            const listResponse = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const problems = listResponse.body as { order_num: number; title: string }[];
+            expect(problems.some(p => p.order_num === 1 && p.title === 'First Problem')).toBe(true);
+            expect(problems.some(p => p.order_num === 2 && p.title === 'Second Problem')).toBe(true);
+
+            // Get details by order_num (not by global id)
+            const detailsResponse = await request(app)
+                .get('/api/problems/1/details')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(detailsResponse.status).toBe(200);
+            expect(detailsResponse.body.problem.title).toBe('First Problem');
+            expect(detailsResponse.body.problem.order_num).toBe(1);
+        });
+
+        it('should reschedule problems based on settings', async () => {
+            // Create a problem with interval > 0
+            const createResponse = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Reschedule Test',
+                    leetcodeUrl: 'https://leetcode.com/problems/reschedule-test',
+                    difficulty: 'easy',
+                });
+
+            const problemId = createResponse.body.problem.id;
+
+            // Review the problem to set an interval
+            await request(app)
+                .post('/api/problems/review')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    problemId,
+                    quality: 5,
+                });
+
+            // Get current state
+            const beforeList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const beforeProblem = beforeList.body[0];
+            const originalInterval = beforeProblem.interval;
+
+            // Reschedule with 0.5x multiplier for easy
+            const rescheduleResponse = await request(app)
+                .post('/api/problems/reschedule')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    settings: {
+                        easyMultiplier: 0.5,
+                        mediumMultiplier: 1.0,
+                        hardMultiplier: 1.0,
+                        sameDayRetry: true,
+                        wrongAnswerPenalty: 0.5,
+                        minInterval: 1,
+                    },
+                });
+
+            expect(rescheduleResponse.status).toBe(200);
+            expect(rescheduleResponse.body.success).toBe(true);
+            expect(rescheduleResponse.body.updatedCount).toBe(1);
+
+            // Check that interval was updated
+            const afterList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const afterProblem = afterList.body[0];
+            // New interval should be roughly half of original (0.5x multiplier)
+            // but at least minInterval (1)
+            expect(afterProblem.interval).toBeLessThanOrEqual(originalInterval);
+            expect(afterProblem.interval).toBeGreaterThanOrEqual(1);
         });
     });
 

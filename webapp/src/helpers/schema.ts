@@ -29,6 +29,7 @@ export type UserUpdate = Updateable<UsersTable>;
 export interface ProblemsTable {
     id: Generated<number>;
     user_id: number | null; // Nullable for migration, but should be populated
+    order_num: number;
     title: string;
     leetcode_url: string;
     difficulty: Difficulty;

@@ -48,10 +48,20 @@ export async function createProblem(req: Request, res: Response) {
             });
         }
 
+        // Calculate next order_num for this user
+        const maxOrderResult = await db
+            .selectFrom('problems')
+            .select(db.fn.max('order_num').as('max_order'))
+            .where('user_id', '=', user.id)
+            .executeTakeFirst();
+
+        const nextOrderNum = (maxOrderResult?.max_order ?? 0) + 1;
+
         const result = await db
             .insertInto('problems')
             .values({
                 user_id: user.id,
+                order_num: nextOrderNum,
                 title,
                 leetcode_url: leetcodeUrl,
                 difficulty: difficulty as Difficulty,
@@ -61,7 +71,7 @@ export async function createProblem(req: Request, res: Response) {
                 repetitions: repetitions ?? 0,
                 next_review_date: nextReviewDate ? new Date(nextReviewDate) : new Date(),
             })
-            .returning(['id', 'title', 'created_at'])
+            .returning(['id', 'title', 'order_num', 'created_at'])
             .executeTakeFirst();
 
         res.status(201).json({

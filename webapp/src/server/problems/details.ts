@@ -8,16 +8,16 @@ export async function getProblemDetails(req: Request, res: Response) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const problemId = parseInt(req.params.id);
-        if (isNaN(problemId)) {
-            return res.status(400).json({ error: 'Invalid problem ID' });
+        const orderNum = parseInt(req.params.id);
+        if (isNaN(orderNum)) {
+            return res.status(400).json({ error: 'Invalid problem number' });
         }
 
-        // Get problem details
+        // Get problem details by order_num (per user)
         const problem = await db
             .selectFrom('problems')
             .selectAll()
-            .where('id', '=', problemId)
+            .where('order_num', '=', orderNum)
             .where('user_id', '=', user.id)
             .executeTakeFirst();
 
@@ -29,7 +29,7 @@ export async function getProblemDetails(req: Request, res: Response) {
         const reviews = await db
             .selectFrom('reviews')
             .selectAll()
-            .where('problem_id', '=', problemId)
+            .where('problem_id', '=', problem.id)
             .orderBy('reviewed_at', 'desc')
             .execute();
 

@@ -90,17 +90,8 @@ func cmdImport(source string) {
 		req := api.CreateProblemRequest{
 			Title:       title,
 			LeetcodeURL: url,
-			Difficulty:  "medium", // Default, maybe try to parse from tags?
+			Difficulty:  parseDifficulty(card, content),
 			Notes:       stripHTML(content),
-		}
-
-		// Check tags for difficulty
-		for _, tag := range card.Tags {
-			lower := strings.ToLower(tag)
-			if lower == "easy" || lower == "medium" || lower == "hard" {
-				req.Difficulty = lower
-				break
-			}
 		}
 
 		// Map Anki stats to SM-2
@@ -179,4 +170,39 @@ func stripHTML(input string) string {
 	// Simple regex to strip tags
 	re := regexp.MustCompile(`<[^>]*>`)
 	return re.ReplaceAllString(input, "")
+}
+
+// parseDifficulty extracts difficulty from Anki tags, fields, or content
+func parseDifficulty(card anki.CardInfo, content string) string {
+	// Check tags first
+	for _, tag := range card.Tags {
+		lower := strings.ToLower(tag)
+		if lower == "easy" || lower == "medium" || lower == "hard" {
+			return lower
+		}
+	}
+
+	// Check for explicit difficulty field
+	diffField := getField(card, "Difficulty", "Level")
+	if diffField != "" {
+		lower := strings.ToLower(diffField)
+		if lower == "easy" || lower == "medium" || lower == "hard" {
+			return lower
+		}
+	}
+
+	// Check content for difficulty keywords (case insensitive)
+	contentLower := strings.ToLower(content)
+	if strings.Contains(contentLower, "difficulty: easy") || strings.Contains(contentLower, "[easy]") {
+		return "easy"
+	}
+	if strings.Contains(contentLower, "difficulty: hard") || strings.Contains(contentLower, "[hard]") {
+		return "hard"
+	}
+	if strings.Contains(contentLower, "difficulty: medium") || strings.Contains(contentLower, "[medium]") {
+		return "medium"
+	}
+
+	// Default to medium
+	return "medium"
 }

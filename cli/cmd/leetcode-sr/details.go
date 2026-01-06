@@ -10,7 +10,7 @@ import (
 
 func cmdDetails() {
 	if len(os.Args) < 3 {
-		tui.PrintError("Usage: leetcode-sr details <problem_id>")
+		tui.PrintError("Usage: leetcode-sr details <problem_number>")
 		return
 	}
 

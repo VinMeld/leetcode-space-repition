@@ -31,6 +31,7 @@ func NewClient(baseURL, token string) *Client {
 // Problem represents a tracked problem
 type Problem struct {
 	ID             int        `json:"id"`
+	OrderNum       int        `json:"order_num"`
 	Title          string     `json:"title"`
 	LeetcodeURL    string     `json:"leetcode_url"`
 	Difficulty     string     `json:"difficulty"`
