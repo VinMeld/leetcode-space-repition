@@ -4,8 +4,11 @@
 (function () {
     'use strict';
 
+    // Use browser API for Firefox, chrome for Chrome
+    const runtime = (typeof browser !== 'undefined') ? browser.runtime : chrome.runtime;
+
     // Listen for messages from background script
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'getProblemMeta') {
             const meta = getProblemMeta();
             sendResponse(meta);

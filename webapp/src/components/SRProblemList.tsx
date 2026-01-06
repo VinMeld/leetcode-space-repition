@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Trash2, Calendar, StickyNote } from 'lucide-react';
+import { ExternalLink, Trash2, Calendar, StickyNote, Star } from 'lucide-react';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import './SRProblemList.css';
@@ -17,6 +17,7 @@ interface Problem {
     easiness_factor: number;
     isDueToday: boolean;
     created_at: string;
+    is_starred: boolean;
 }
 
 interface SRProblemListProps {
@@ -25,6 +26,7 @@ interface SRProblemListProps {
     onReview: (problemId: number, quality: number) => void;
     onDelete: (problemId: number) => void;
     onInfo: (problem: Problem) => void;
+    onStar: (problemId: number) => void;
     isReviewing?: number | null;
 }
 
@@ -43,6 +45,7 @@ export const SRProblemList: React.FC<SRProblemListProps> = ({
     onReview,
     onDelete,
     onInfo,
+    onStar,
     isReviewing,
 }) => {
     const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
@@ -168,6 +171,15 @@ export const SRProblemList: React.FC<SRProblemListProps> = ({
                                     title="Details"
                                 >
                                     <span className="text-blue-400">ℹ️</span>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => onStar(problem.id)}
+                                    className={`star-btn mr-2 ${problem.is_starred ? 'starred' : ''}`}
+                                    title={problem.is_starred ? 'Unstar' : 'Star'}
+                                >
+                                    <Star size={16} fill={problem.is_starred ? 'currentColor' : 'none'} className={problem.is_starred ? 'text-yellow-400' : 'text-gray-400'} />
                                 </Button>
                                 <Button
                                     variant="ghost"

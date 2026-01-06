@@ -240,3 +240,88 @@
 .sr-settings-danger h3 {
     color: #ef4444;
 }
+
+/* Multiplier Preset Buttons */
+.sr-multiplier-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.sr-multiplier-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--border);
+}
+
+.sr-multiplier-easy {
+    border-left-color: var(--success);
+}
+
+.sr-multiplier-medium {
+    border-left-color: var(--warning);
+}
+
+.sr-multiplier-hard {
+    border-left-color: var(--error);
+}
+
+.sr-multiplier-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    min-width: 70px;
+}
+
+.sr-multiplier-buttons {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.sr-multiplier-btn {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 50px;
+    text-align: center;
+}
+
+.sr-multiplier-btn:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+    background: var(--surface-2);
+}
+
+.sr-multiplier-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.sr-multiplier-easy .sr-multiplier-btn.active {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.sr-multiplier-medium .sr-multiplier-btn.active {
+    background: var(--warning);
+    border-color: var(--warning);
+    color: #1a1a1a;
+}
+
+.sr-multiplier-hard .sr-multiplier-btn.active {
+    background: var(--error);
+    border-color: var(--error);
+}

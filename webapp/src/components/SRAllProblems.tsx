@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Badge } from './ui/Badge';
-import { Search, ExternalLink, Calendar, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, ExternalLink, Calendar, ChevronUp, ChevronDown, Star } from 'lucide-react';
 import './SRAllProblems.css';
 
 interface Problem {
@@ -16,6 +16,7 @@ interface Problem {
     isDueToday: boolean;
     created_at: string;
     easiness_factor: number;
+    is_starred: boolean;
 }
 
 interface SRAllProblemsProps {
@@ -23,6 +24,7 @@ interface SRAllProblemsProps {
     onReview: (problemId: number, quality: number) => void;
     onDelete: (problemId: number) => void;
     onInfo: (problem: Problem) => void;
+    onStar: (problemId: number) => void;
 }
 
 type SortField = 'title' | 'difficulty' | 'next_review_date' | 'interval';
@@ -34,7 +36,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: { field: SortField
     return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
 };
 
-export function SRAllProblems({ problems, onReview, onDelete, onInfo }: SRAllProblemsProps) {
+export function SRAllProblems({ problems, onReview, onDelete, onInfo, onStar }: SRAllProblemsProps) {
     const [filter, setFilter] = useState<DifficultyFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortField, setSortField] = useState<SortField>('next_review_date');
@@ -207,6 +209,13 @@ export function SRAllProblems({ problems, onReview, onDelete, onInfo }: SRAllPro
                                             title="Details"
                                         >
                                             ℹ️
+                                        </button>
+                                        <button
+                                            className={`sr-action-btn sr-action-star ${problem.is_starred ? 'starred' : ''}`}
+                                            onClick={() => onStar(problem.id)}
+                                            title={problem.is_starred ? 'Unstar' : 'Star'}
+                                        >
+                                            <Star size={14} fill={problem.is_starred ? 'currentColor' : 'none'} />
                                         </button>
                                         <button
                                             className="sr-action-btn sr-action-delete"

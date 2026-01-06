@@ -65,7 +65,8 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
     repetitions INTEGER DEFAULT 0,
     next_review_date DATE DEFAULT CURRENT_DATE,
     last_reviewed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_starred BOOLEAN NOT NULL DEFAULT FALSE
 );
                 
                 CREATE TABLE IF NOT EXISTS reviews(
@@ -550,6 +551,212 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             // but at least minInterval (1)
             expect(afterProblem.interval).toBeLessThanOrEqual(originalInterval);
             expect(afterProblem.interval).toBeGreaterThanOrEqual(1);
+        });
+
+        it('should restore intervals after round-trip reschedule (multiply then divide)', async () => {
+            // Create problems with different difficulties
+            const createEasy = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Easy Round Trip',
+                    leetcodeUrl: 'https://leetcode.com/problems/easy-round-trip',
+                    difficulty: 'easy',
+                });
+
+            const createMedium = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Medium Round Trip',
+                    leetcodeUrl: 'https://leetcode.com/problems/medium-round-trip',
+                    difficulty: 'medium',
+                });
+
+            const createHard = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Hard Round Trip',
+                    leetcodeUrl: 'https://leetcode.com/problems/hard-round-trip',
+                    difficulty: 'hard',
+                });
+
+            const easyId = createEasy.body.problem.id;
+            const mediumId = createMedium.body.problem.id;
+            const hardId = createHard.body.problem.id;
+
+            // Review all problems TWICE with quality 5 to get larger intervals
+            // First review: interval goes from 1 to 6
+            // Second review: interval grows further
+            for (let i = 0; i < 2; i++) {
+                for (const problemId of [easyId, mediumId, hardId]) {
+                    await request(app)
+                        .post('/api/problems/review')
+                        .set('Authorization', `Bearer ${authToken} `)
+                        .send({ problemId, quality: 5 });
+                }
+            }
+
+            // Get original intervals (should be 6+ days now)
+            const originalList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const findProblem = (list: { id: number; interval: number; next_review_date: string }[], id: number) =>
+                list.find(p => p.id === id);
+
+            const originalEasy = findProblem(originalList.body, easyId);
+            const originalMedium = findProblem(originalList.body, mediumId);
+            const originalHard = findProblem(originalList.body, hardId);
+
+            expect(originalEasy).toBeDefined();
+            expect(originalMedium).toBeDefined();
+            expect(originalHard).toBeDefined();
+
+            // Store original values
+            const originalEasyInterval = originalEasy!.interval;
+            const originalMediumInterval = originalMedium!.interval;
+            const originalHardInterval = originalHard!.interval;
+
+            // Verify intervals are large enough for meaningful test (should be 6+)
+            expect(originalEasyInterval).toBeGreaterThanOrEqual(6);
+
+            // STEP 1: Reschedule with 0.5x multipliers (halve intervals)
+            const reschedule1 = await request(app)
+                .post('/api/problems/reschedule')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    settings: {
+                        easyMultiplier: 0.5,
+                        mediumMultiplier: 0.5,
+                        hardMultiplier: 0.5,
+                        sameDayRetry: true,
+                        wrongAnswerPenalty: 0.5,
+                        minInterval: 1,
+                    },
+                });
+
+            expect(reschedule1.status).toBe(200);
+            expect(reschedule1.body.updatedCount).toBe(3);
+
+            // Check intervals are halved
+            const afterHalf = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const halfEasy = findProblem(afterHalf.body, easyId);
+            const halfMedium = findProblem(afterHalf.body, mediumId);
+            const halfHard = findProblem(afterHalf.body, hardId);
+
+            // Intervals should be roughly half (rounded)
+            expect(halfEasy!.interval).toBe(Math.max(1, Math.round(originalEasyInterval * 0.5)));
+            expect(halfMedium!.interval).toBe(Math.max(1, Math.round(originalMediumInterval * 0.5)));
+            expect(halfHard!.interval).toBe(Math.max(1, Math.round(originalHardInterval * 0.5)));
+
+            // STEP 2: Reschedule with 2.0x multipliers (double intervals back)
+            const reschedule2 = await request(app)
+                .post('/api/problems/reschedule')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    settings: {
+                        easyMultiplier: 2.0,
+                        mediumMultiplier: 2.0,
+                        hardMultiplier: 2.0,
+                        sameDayRetry: true,
+                        wrongAnswerPenalty: 0.5,
+                        minInterval: 1,
+                    },
+                });
+
+            expect(reschedule2.status).toBe(200);
+            expect(reschedule2.body.updatedCount).toBe(3);
+
+            // Check intervals are restored (doubled from halved = original)
+            const afterDouble = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const doubleEasy = findProblem(afterDouble.body, easyId);
+            const doubleMedium = findProblem(afterDouble.body, mediumId);
+            const doubleHard = findProblem(afterDouble.body, hardId);
+
+            // Intervals should be back to original (0.5 * 2.0 = 1.0)
+            // Due to rounding, allow +/- 1 day tolerance for larger intervals
+            expect(Math.abs(doubleEasy!.interval - originalEasyInterval)).toBeLessThanOrEqual(1);
+            expect(Math.abs(doubleMedium!.interval - originalMediumInterval)).toBeLessThanOrEqual(1);
+            expect(Math.abs(doubleHard!.interval - originalHardInterval)).toBeLessThanOrEqual(1);
+        });
+
+        it('should apply different multipliers per difficulty', async () => {
+            // Create problems with different difficulties
+            const createEasy = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Diff Easy',
+                    leetcodeUrl: 'https://leetcode.com/problems/diff-easy',
+                    difficulty: 'easy',
+                });
+
+            const createHard = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Diff Hard',
+                    leetcodeUrl: 'https://leetcode.com/problems/diff-hard',
+                    difficulty: 'hard',
+                });
+
+            const easyId = createEasy.body.problem.id;
+            const hardId = createHard.body.problem.id;
+
+            // Review to get intervals (quality 4 gives interval of 4)
+            for (const problemId of [easyId, hardId]) {
+                await request(app)
+                    .post('/api/problems/review')
+                    .set('Authorization', `Bearer ${authToken} `)
+                    .send({ problemId, quality: 4 });
+            }
+
+            // Get original intervals
+            const originalList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const findProblem = (list: { id: number; interval: number }[], id: number) =>
+                list.find(p => p.id === id);
+
+            const originalEasy = findProblem(originalList.body, easyId);
+            const originalHard = findProblem(originalList.body, hardId);
+
+            // Reschedule: Easy 0.5x (half), Hard 2.0x (double)
+            await request(app)
+                .post('/api/problems/reschedule')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    settings: {
+                        easyMultiplier: 0.5,
+                        mediumMultiplier: 1.0,
+                        hardMultiplier: 2.0,
+                        sameDayRetry: true,
+                        wrongAnswerPenalty: 0.5,
+                        minInterval: 1,
+                    },
+                });
+
+            // Check results
+            const afterList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const afterEasy = findProblem(afterList.body, easyId);
+            const afterHard = findProblem(afterList.body, hardId);
+
+            // Easy should be halved
+            expect(afterEasy!.interval).toBe(Math.max(1, Math.round(originalEasy!.interval * 0.5)));
+            // Hard should be doubled
+            expect(afterHard!.interval).toBe(Math.round(originalHard!.interval * 2.0));
         });
     });
 

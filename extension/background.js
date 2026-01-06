@@ -3,12 +3,31 @@
 
 const DEFAULT_API_URL = 'http://localhost:3001/api';
 
-// Get settings from storage
+// Firefox compatibility - use browser API if available
+const isFirefox = typeof browser !== 'undefined';
+const tabs = isFirefox ? browser.tabs : chrome.tabs;
+const runtime = isFirefox ? browser.runtime : chrome.runtime;
+const commands = isFirefox ? browser.commands : chrome.commands;
+// Note: Firefox uses browserAction, Chrome MV3 uses action
+const browserAction = isFirefox
+    ? browser.browserAction
+    : (chrome.action || chrome.browserAction);
+
+// Get settings from storage (Firefox compatible)
 async function getSettings() {
-    const result = await chrome.storage.sync.get(['apiUrl', 'token']);
+    let result = {};
+    try {
+        if (isFirefox) {
+            result = await browser.storage.local.get(['apiUrl', 'token']);
+        } else {
+            result = await chrome.storage.sync.get(['apiUrl', 'token']);
+        }
+    } catch (e) {
+        console.error('Error getting settings:', e);
+    }
     return {
-        apiUrl: result.apiUrl || DEFAULT_API_URL,
-        token: result.token || '',
+        apiUrl: (result && result.apiUrl) || DEFAULT_API_URL,
+        token: (result && result.token) || '',
     };
 }
 
@@ -45,7 +64,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 // Get problem metadata from active tab
 async function getProblemFromTab(tabId) {
     try {
-        const response = await chrome.tabs.sendMessage(tabId, { action: 'getProblemMeta' });
+        const response = await tabs.sendMessage(tabId, { action: 'getProblemMeta' });
         return response;
     } catch (error) {
         console.error('[LeetCode SR] Failed to get problem meta:', error);
@@ -88,24 +107,27 @@ async function reviewProblem(slug, quality) {
 // Show notification
 function showNotification(title, message, isError = false) {
     // Use badge text for quick feedback
-    chrome.action.setBadgeText({ text: isError ? '!' : '✓' });
-    chrome.action.setBadgeBackgroundColor({ color: isError ? '#f85149' : '#3fb950' });
+    if (browserAction && browserAction.setBadgeText) {
+        browserAction.setBadgeText({ text: isError ? '!' : '✓' });
+        browserAction.setBadgeBackgroundColor({ color: isError ? '#f85149' : '#3fb950' });
 
-    // Clear badge after 2 seconds
-    setTimeout(() => {
-        chrome.action.setBadgeText({ text: '' });
-    }, 2000);
+        // Clear badge after 2 seconds
+        setTimeout(() => {
+            browserAction.setBadgeText({ text: '' });
+        }, 2000);
+    }
 
     console.log(`[LeetCode SR] ${isError ? 'Error' : 'Success'}: ${title} - ${message}`);
 }
 
 // Handle keyboard commands
-chrome.commands.onCommand.addListener(async (command) => {
+commands.onCommand.addListener(async (command) => {
     console.log('[LeetCode SR] Command:', command);
 
     try {
         // Get active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tabsResult = await tabs.query({ active: true, currentWindow: true });
+        const tab = tabsResult[0];
 
         if (!tab || !tab.url) {
             showNotification('Error', 'No active tab', true);
@@ -140,17 +162,29 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'testConnection') {
         apiRequest('/health')
             .then(data => sendResponse({ success: true, data }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // Keep channel open
     } else if (request.action === 'saveToken') {
-        chrome.storage.sync.set({ token: request.token }, () => {
-            sendResponse({ success: true });
-            showNotification('Login', 'Successfully logged in!');
-        });
+        // Use browser.storage.local for Firefox, chrome.storage.sync for Chrome
+        const setToken = async () => {
+            try {
+                if (isFirefox) {
+                    await browser.storage.local.set({ token: request.token });
+                } else {
+                    await chrome.storage.sync.set({ token: request.token });
+                }
+                sendResponse({ success: true });
+                showNotification('Login', 'Successfully logged in!');
+            } catch (e) {
+                console.error('Error saving token:', e);
+                sendResponse({ success: false, error: e.message });
+            }
+        };
+        setToken();
         return true;
     }
 });

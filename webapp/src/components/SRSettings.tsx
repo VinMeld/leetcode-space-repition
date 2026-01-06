@@ -6,6 +6,43 @@ import './SRSettings.css';
 
 import { type SM2Settings, loadSettings, saveSettings, defaultSettings } from '../lib/settings';
 
+// Multiplier presets for clearer UX
+const MULTIPLIER_PRESETS = [
+    { label: '½×', value: 0.5, title: 'Half (shorter intervals)' },
+    { label: '¾×', value: 0.75, title: 'Three-quarters' },
+    { label: '1×', value: 1.0, title: 'No change' },
+    { label: '1.5×', value: 1.5, title: 'One and a half' },
+    { label: '2×', value: 2.0, title: 'Double (longer intervals)' },
+];
+
+interface MultiplierPresetProps {
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+    colorClass: 'easy' | 'medium' | 'hard';
+}
+
+function MultiplierPreset({ label, value, onChange, colorClass }: MultiplierPresetProps) {
+    return (
+        <div className={`sr-multiplier-row sr-multiplier-${colorClass}`}>
+            <span className="sr-multiplier-label">{label}</span>
+            <div className="sr-multiplier-buttons">
+                {MULTIPLIER_PRESETS.map((preset) => (
+                    <button
+                        key={preset.value}
+                        type="button"
+                        className={`sr-multiplier-btn ${value === preset.value ? 'active' : ''}`}
+                        onClick={() => onChange(preset.value)}
+                        title={preset.title}
+                    >
+                        {preset.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 interface SRSettingsProps {
     onClose?: () => void;
 }
@@ -77,60 +114,65 @@ export function SRSettings({ onClose }: SRSettingsProps) {
 
             <div className="sr-settings-content">
                 <div className="sr-settings-section">
-                    <h3>Spaced Repetition</h3>
+                    <h3>Interval Adjustment</h3>
                     <p className="sr-settings-description">
-                        Adjust how often problems of each difficulty appear. Higher = less frequent.
+                        Adjust intervals for each difficulty. This will be applied when you click "Reschedule All" below.
                     </p>
 
-                    <div className="sr-settings-slider-group">
-                        <label>
-                            <span className="sr-settings-label">
-                                Easy
-                                <span className="sr-settings-value">{settings.easyMultiplier.toFixed(2)}x</span>
-                            </span>
-                            <input
-                                type="range"
-                                min="0.5"
-                                max="2"
-                                step="0.1"
-                                value={settings.easyMultiplier}
-                                onChange={(e) => updateSetting('easyMultiplier', parseFloat(e.target.value))}
-                                className="sr-slider sr-slider-easy"
-                            />
-                        </label>
-
-                        <label>
-                            <span className="sr-settings-label">
-                                Medium
-                                <span className="sr-settings-value">{settings.mediumMultiplier.toFixed(2)}x</span>
-                            </span>
-                            <input
-                                type="range"
-                                min="0.5"
-                                max="2"
-                                step="0.1"
-                                value={settings.mediumMultiplier}
-                                onChange={(e) => updateSetting('mediumMultiplier', parseFloat(e.target.value))}
-                                className="sr-slider sr-slider-medium"
-                            />
-                        </label>
-
-                        <label>
-                            <span className="sr-settings-label">
-                                Hard
-                                <span className="sr-settings-value">{settings.hardMultiplier.toFixed(2)}x</span>
-                            </span>
-                            <input
-                                type="range"
-                                min="0.5"
-                                max="2"
-                                step="0.1"
-                                value={settings.hardMultiplier}
-                                onChange={(e) => updateSetting('hardMultiplier', parseFloat(e.target.value))}
-                                className="sr-slider sr-slider-hard"
-                            />
-                        </label>
+                    <div className="sr-multiplier-grid">
+                        <MultiplierPreset
+                            label="Easy"
+                            value={settings.easyMultiplier}
+                            onChange={(val) => updateSetting('easyMultiplier', val)}
+                            colorClass="easy"
+                        />
+                        <MultiplierPreset
+                            label="Medium"
+                            value={settings.mediumMultiplier}
+                            onChange={(val) => updateSetting('mediumMultiplier', val)}
+                            colorClass="medium"
+                        />
+                        <MultiplierPreset
+                            label="Hard"
+                            value={settings.hardMultiplier}
+                            onChange={(val) => updateSetting('hardMultiplier', val)}
+                            colorClass="hard"
+                        />
                     </div>
+
+                    <p className="sr-settings-hint" style={{ marginTop: '12px' }}>
+                        <strong>Shorter</strong> = see problems more often &nbsp;|&nbsp;
+                        <strong>Longer</strong> = see problems less often
+                    </p>
+
+                    <Button
+                        style={{ marginTop: '16px' }}
+                        onClick={async () => {
+                            if (confirm('This will recalculate intervals for ALL problems based on your current settings. Continue?')) {
+                                try {
+                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`${apiUrl}/problems/reschedule`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ settings }),
+                                    });
+                                    if (!res.ok) throw new Error('Failed to reschedule');
+                                    const data = await res.json();
+                                    toast.success(`Rescheduled ${data.updatedCount} problems`);
+                                    window.location.reload();
+                                } catch (error) {
+                                    toast.error('Failed to reschedule');
+                                    console.error(error);
+                                }
+                            }
+                        }}
+                    >
+                        Reschedule All Problems
+                    </Button>
                 </div>
 
                 <div className="sr-settings-section">
@@ -231,39 +273,6 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                     </div>
                 )}
 
-                <div className="sr-settings-section">
-                    <h3>Reschedule</h3>
-                    <p className="sr-settings-description">
-                        Apply current multipliers to all existing problem intervals. Use this if you changed difficulty settings and want them to take effect immediately on old reviews.
-                    </p>
-                    <Button
-                        onClick={async () => {
-                            if (confirm('This will recalculate intervals for ALL problems based on your current settings. Continue?')) {
-                                try {
-                                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-                                    const token = localStorage.getItem('token');
-                                    const res = await fetch(`${apiUrl}/problems/reschedule`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': `Bearer ${token}`
-                                        },
-                                        body: JSON.stringify({ settings }),
-                                    });
-                                    if (!res.ok) throw new Error('Failed to reschedule');
-                                    const data = await res.json();
-                                    toast.success(`Rescheduled ${data.updatedCount} problems`);
-                                    window.location.reload();
-                                } catch (error) {
-                                    toast.error('Failed to reschedule');
-                                    console.error(error);
-                                }
-                            }
-                        }}
-                    >
-                        Reschedule All
-                    </Button>
-                </div>
 
                 <div className="sr-settings-section sr-settings-danger">
                     <h3>Danger Zone</h3>

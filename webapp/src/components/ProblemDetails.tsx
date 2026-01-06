@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import type { Problem } from '../hooks/useProblems';
+import { X } from 'lucide-react';
+import './ProblemDetails.css';
 
 interface Review {
     id: number;
@@ -43,8 +45,41 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
         enabled: !!token && !!orderNum,
     });
 
-    if (isLoading) return <div className="p-4">Loading details...</div>;
-    if (error) return <div className="p-4 text-red-500">Error loading details</div>;
+    // Handle escape key to close modal
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            onClose();
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="problem-details-modal" onClick={onClose} onKeyDown={handleKeyDown}>
+                <div className="problem-details-content" onClick={e => e.stopPropagation()}>
+                    <div className="problem-details-loading">Loading details...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="problem-details-modal" onClick={onClose}>
+                <div className="problem-details-content" onClick={e => e.stopPropagation()}>
+                    <div className="problem-details-header">
+                        <h2>Error</h2>
+                        <button className="problem-details-close" onClick={onClose}>
+                            <X size={24} />
+                        </button>
+                    </div>
+                    <div className="problem-details-body">
+                        <div className="problem-details-empty">Error loading details</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (!data) return null;
 
     const { problem, reviews, stats } = data;
@@ -54,21 +89,25 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
         return new Date(dateStr).toLocaleString();
     };
 
+    const getQualityClass = (quality: number) => {
+        if (quality >= 4) return 'quality-high';
+        if (quality === 3) return 'quality-medium';
+        return 'quality-low';
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-gray-700 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white">{problem.title}</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+        <div className="problem-details-modal" onClick={onClose}>
+            <div className="problem-details-content" onClick={e => e.stopPropagation()}>
+                <div className="problem-details-header">
+                    <h2>{problem.title}</h2>
+                    <button className="problem-details-close" onClick={onClose} title="Close">
+                        <X size={24} />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8">
+                <div className="problem-details-body">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="problem-details-stats">
                         <StatBox label="Added" value={formatDate(problem.created_at)} />
                         <StatBox label="First Review" value={formatDate(stats.firstReview)} />
                         <StatBox label="Latest Review" value={formatDate(stats.latestReview)} />
@@ -83,35 +122,35 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
                         <StatBox label="Easiness" value={problem.easiness_factor.toFixed(2)} />
                     </div>
 
-                    {/* History Table */}
-                    <div>
-                        <h3 className="text-xl font-semibold text-white mb-4">Review History</h3>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-gray-300">
-                                <thead className="text-xs uppercase bg-gray-700 text-gray-400">
+                    {/* Review History */}
+                    <div className="problem-details-history">
+                        <h3>Review History</h3>
+                        {reviews.length === 0 ? (
+                            <div className="problem-details-empty">No reviews yet</div>
+                        ) : (
+                            <table className="problem-details-table">
+                                <thead>
                                     <tr>
-                                        <th className="px-4 py-3">Date</th>
-                                        <th className="px-4 py-3">Rating</th>
-                                        <th className="px-4 py-3">Type</th>
+                                        <th>Date</th>
+                                        <th>Rating</th>
+                                        <th>Type</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-700">
+                                <tbody>
                                     {reviews.map((review) => (
-                                        <tr key={review.id} className="hover:bg-gray-700/50">
-                                            <td className="px-4 py-3">{formatDate(review.reviewed_at)}</td>
-                                            <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${getQualityColor(review.quality)}`}>
+                                        <tr key={review.id}>
+                                            <td>{formatDate(review.reviewed_at)}</td>
+                                            <td>
+                                                <span className={`quality-badge ${getQualityClass(review.quality)}`}>
                                                     {review.quality}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {review.quality < 3 ? 'Lapse' : 'Review'}
-                                            </td>
+                                            <td>{review.quality < 3 ? 'Lapse' : 'Review'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -121,15 +160,9 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
 
 function StatBox({ label, value }: { label: string; value: string | number }) {
     return (
-        <div className="bg-gray-700/50 p-3 rounded-lg">
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{label}</div>
-            <div className="text-lg font-semibold text-white truncate" title={String(value)}>{value}</div>
+        <div className="stat-box">
+            <div className="stat-box-label">{label}</div>
+            <div className="stat-box-value" title={String(value)}>{value}</div>
         </div>
     );
-}
-
-function getQualityColor(quality: number) {
-    if (quality >= 4) return 'bg-green-900 text-green-300';
-    if (quality === 3) return 'bg-blue-900 text-blue-300';
-    return 'bg-red-900 text-red-300';
 }

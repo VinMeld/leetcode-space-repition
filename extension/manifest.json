@@ -36,11 +36,13 @@
         },
         {
             "matches": [
-                "http://localhost:5173/*"
+                "http://localhost/*",
+                "https://*/*"
             ],
             "js": [
                 "auth-content.js"
-            ]
+            ],
+            "run_at": "document_start"
         }
     ],
     "commands": {

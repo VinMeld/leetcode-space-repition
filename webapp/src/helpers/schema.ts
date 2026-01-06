@@ -40,6 +40,7 @@ export interface ProblemsTable {
     next_review_date: Date;
     last_reviewed_at: Date | null;
     created_at: Generated<Date>;
+    is_starred: Generated<boolean>;
 }
 
 export type Problem = Selectable<ProblemsTable>;

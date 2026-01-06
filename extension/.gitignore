@@ -10,3 +10,11 @@ Thumbs.db
 *.crx
 *.pem
 *.zip
+
+# Dependencies
+node_modules/
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/

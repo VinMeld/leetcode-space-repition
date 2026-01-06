@@ -237,6 +237,31 @@
     color: white;
 }
 
+.sr-action-star {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+}
+
+.sr-action-star:hover {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.sr-action-star.starred {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.sr-action-info {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+}
+
+.sr-action-info:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
 /* Empty state */
 .sr-all-problems-empty {
     padding: var(--space-8);

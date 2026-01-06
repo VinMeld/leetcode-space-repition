@@ -11,6 +11,7 @@ import { reviewProblem } from './problems/review';
 import { deleteProblem, deleteAllProblems } from './problems/delete';
 import { rescheduleProblems } from './problems/reschedule';
 import { getProblemDetails } from './problems/details';
+import { toggleStar } from './problems/star';
 import { getStats } from './stats';
 // import { validateApiKey } from './auth'; // Deprecated in favor of JWT
 
@@ -93,6 +94,7 @@ app.post('/api/problems/review', reviewProblem);
 app.post('/api/problems/delete', deleteProblem);
 app.post('/api/problems/delete-all', deleteAllProblems);
 app.post('/api/problems/reschedule', rescheduleProblems);
+app.post('/api/problems/star', toggleStar);
 app.get('/api/problems/:id/details', getProblemDetails);
 
 // API Routes - Stats

@@ -1,0 +1,20 @@
+{
+    "name": "leetcode-sr-extension",
+    "version": "1.0.0",
+    "description": "LeetCode SR Tracker Browser Extension",
+    "type": "module",
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:e2e": "playwright test",
+        "test:e2e:headed": "playwright test --headed",
+        "lint": "eslint *.js src/**/*.js --no-error-on-unmatched-pattern"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "@testing-library/dom": "^10.0.0",
+        "eslint": "^9.0.0",
+        "happy-dom": "^15.0.0",
+        "vitest": "^2.0.0"
+    }
+}

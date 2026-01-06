@@ -38,7 +38,7 @@ export const Dashboard: React.FC = () => {
     const [reviewingProblem, setReviewingProblem] = useState<number | null>(null);
     const [selectedProblem, setSelectedProblem] = useState<UIProblem | null>(null);
 
-    const { problems: problemsQuery, createProblem, reviewProblem, deleteProblem } = useProblems();
+    const { problems: problemsQuery, createProblem, reviewProblem, deleteProblem, toggleStar } = useProblems();
     const { data: problems = [], isLoading: problemsLoading } = problemsQuery;
     const { data: stats } = useStats();
 
@@ -116,6 +116,14 @@ export const Dashboard: React.FC = () => {
         }
     };
 
+    const handleStar = async (problemId: number) => {
+        try {
+            await toggleStar.mutateAsync(problemId);
+        } catch {
+            toast.error('Failed to toggle star');
+        }
+    };
+
     return (
         <AppLayout>
             <div className="dashboard">
@@ -165,6 +173,7 @@ export const Dashboard: React.FC = () => {
                                 onReview={handleReview}
                                 onDelete={handleDelete}
                                 onInfo={setSelectedProblem}
+                                onStar={handleStar}
                                 isReviewing={reviewingProblem}
                             />
                         </TabPanel>
@@ -179,6 +188,7 @@ export const Dashboard: React.FC = () => {
                                 onReview={handleReview}
                                 onDelete={handleDelete}
                                 onInfo={setSelectedProblem}
+                                onStar={handleStar}
                             />
                         </TabPanel>
 

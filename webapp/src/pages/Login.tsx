@@ -27,9 +27,23 @@ export function Login() {
             return null;
         }
 
-        // If extension login, post message
+        // If extension login, post message and show success
         if (extension && token) {
             window.postMessage({ type: 'EXTENSION_LOGIN_SUCCESS', token }, '*');
+            // Show a success page instead of redirecting
+            return (
+                <div className="login-container">
+                    <div className="login-card" style={{ textAlign: 'center' }}>
+                        <h1 style={{ color: '#3fb950' }}>✓ Login Successful!</h1>
+                        <p style={{ marginBottom: '16px' }}>
+                            Your token has been sent to the extension.
+                        </p>
+                        <p style={{ color: '#8b949e', fontSize: '14px' }}>
+                            You can close this tab and return to the extension.
+                        </p>
+                    </div>
+                </div>
+            );
         }
 
         return <Navigate to={from} replace />;

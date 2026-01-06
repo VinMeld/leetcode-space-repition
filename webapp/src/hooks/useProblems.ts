@@ -19,6 +19,7 @@ export interface Problem {
     last_reviewed_at?: string;
     created_at: string;
     isDueToday: boolean;
+    is_starred: boolean;
 }
 
 export interface CreateProblemData {
@@ -114,7 +115,22 @@ export function useProblems() {
         },
     });
 
-    return { problems, createProblem, reviewProblem, deleteProblem };
+    const toggleStar = useMutation({
+        mutationFn: async (problemId: number) => {
+            const res = await fetch(`${API_URL}/problems/star`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ problemId }),
+            });
+            if (!res.ok) throw new Error('Failed to toggle star');
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['problems'] });
+        },
+    });
+
+    return { problems, createProblem, reviewProblem, deleteProblem, toggleStar };
 }
 
 export function useStats() {
