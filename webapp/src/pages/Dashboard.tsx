@@ -215,7 +215,7 @@ export const Dashboard: React.FC = () => {
 
                 {selectedProblem && (
                     <ProblemDetails
-                        problemId={selectedProblem.id}
+                        orderNum={selectedProblem.order_num}
                         onClose={() => setSelectedProblem(null)}
                     />
                 )}

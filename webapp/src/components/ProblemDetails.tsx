@@ -21,18 +21,18 @@ interface ProblemDetailsData {
 }
 
 interface ProblemDetailsProps {
-    problemId: number;
+    orderNum: number;
     onClose: () => void;
 }
 
-export function ProblemDetails({ problemId, onClose }: ProblemDetailsProps) {
+export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
     const { token } = useAuth();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ['problemDetails', problemId],
+        queryKey: ['problemDetails', orderNum],
         queryFn: async () => {
-            const res = await fetch(`${apiUrl}/problems/${problemId}/details`, {
+            const res = await fetch(`${apiUrl}/problems/${orderNum}/details`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -40,7 +40,7 @@ export function ProblemDetails({ problemId, onClose }: ProblemDetailsProps) {
             if (!res.ok) throw new Error('Failed to fetch details');
             return res.json() as Promise<ProblemDetailsData>;
         },
-        enabled: !!token && !!problemId,
+        enabled: !!token && !!orderNum,
     });
 
     if (isLoading) return <div className="p-4">Loading details...</div>;

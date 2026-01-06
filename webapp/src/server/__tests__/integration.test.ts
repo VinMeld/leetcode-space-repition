@@ -412,6 +412,85 @@ describe('Integration Tests - Full Request/Response Cycle', () => {
             expect(detailsResponse.body.problem.order_num).toBe(1);
         });
 
+        it('should reset order numbers after delete-all and re-import', async () => {
+            // Create initial problems
+            await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Problem A',
+                    leetcodeUrl: 'https://leetcode.com/problems/problem-a',
+                    difficulty: 'easy',
+                });
+
+            await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Problem B',
+                    leetcodeUrl: 'https://leetcode.com/problems/problem-b',
+                    difficulty: 'medium',
+                });
+
+            // Verify initial order numbers
+            const firstList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            const firstProblems = firstList.body as { order_num: number }[];
+            expect(firstProblems.length).toBe(2);
+            expect(firstProblems.some(p => p.order_num === 1)).toBe(true);
+            expect(firstProblems.some(p => p.order_num === 2)).toBe(true);
+
+            // Delete all problems
+            const deleteResponse = await request(app)
+                .post('/api/problems/delete-all')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(deleteResponse.status).toBe(200);
+
+            // Verify all problems are deleted
+            const emptyList = await request(app)
+                .get('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(emptyList.body.length).toBe(0);
+
+            // Re-import problems (create new ones)
+            const createResponseC = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Problem C',
+                    leetcodeUrl: 'https://leetcode.com/problems/problem-c',
+                    difficulty: 'hard',
+                });
+
+            expect(createResponseC.status).toBe(201);
+            // Order number should start from 1 again, not continue from 3
+            expect(createResponseC.body.problem.order_num).toBe(1);
+
+            const createResponseD = await request(app)
+                .post('/api/problems')
+                .set('Authorization', `Bearer ${authToken} `)
+                .send({
+                    title: 'Problem D',
+                    leetcodeUrl: 'https://leetcode.com/problems/problem-d',
+                    difficulty: 'easy',
+                });
+
+            expect(createResponseD.body.problem.order_num).toBe(2);
+
+            // Verify details lookup by order_num works correctly
+            const detailsResponse = await request(app)
+                .get('/api/problems/1/details')
+                .set('Authorization', `Bearer ${authToken} `);
+
+            expect(detailsResponse.status).toBe(200);
+            expect(detailsResponse.body.problem.title).toBe('Problem C');
+            expect(detailsResponse.body.problem.order_num).toBe(1);
+        });
+
         it('should reschedule problems based on settings', async () => {
             // Create a problem with interval > 0
             const createResponse = await request(app)

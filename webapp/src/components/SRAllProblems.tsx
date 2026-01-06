@@ -5,6 +5,7 @@ import './SRAllProblems.css';
 
 interface Problem {
     id: number;
+    order_num: number;
     title: string;
     leetcode_url: string;
     difficulty: 'easy' | 'medium' | 'hard';
