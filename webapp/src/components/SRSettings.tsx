@@ -8,37 +8,35 @@ import { type SM2Settings, loadSettings, saveSettings, defaultSettings } from '.
 
 // Multiplier presets for clearer UX
 const MULTIPLIER_PRESETS = [
-    { label: '½×', value: 0.5, title: 'Half (shorter intervals)' },
-    { label: '¾×', value: 0.75, title: 'Three-quarters' },
-    { label: '1×', value: 1.0, title: 'No change' },
-    { label: '1.5×', value: 1.5, title: 'One and a half' },
-    { label: '2×', value: 2.0, title: 'Double (longer intervals)' },
+    { label: '½× (Shorter)', value: 0.5 },
+    { label: '¾×', value: 0.75 },
+    { label: '1× (No change)', value: 1.0 },
+    { label: '1.5×', value: 1.5 },
+    { label: '2× (Longer)', value: 2.0 },
 ];
 
-interface MultiplierPresetProps {
+interface MultiplierSelectProps {
     label: string;
     value: number;
     onChange: (value: number) => void;
     colorClass: 'easy' | 'medium' | 'hard';
 }
 
-function MultiplierPreset({ label, value, onChange, colorClass }: MultiplierPresetProps) {
+function MultiplierSelect({ label, value, onChange, colorClass }: MultiplierSelectProps) {
     return (
         <div className={`sr-multiplier-row sr-multiplier-${colorClass}`}>
             <span className="sr-multiplier-label">{label}</span>
-            <div className="sr-multiplier-buttons">
+            <select
+                className="sr-multiplier-select"
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value))}
+            >
                 {MULTIPLIER_PRESETS.map((preset) => (
-                    <button
-                        key={preset.value}
-                        type="button"
-                        className={`sr-multiplier-btn ${value === preset.value ? 'active' : ''}`}
-                        onClick={() => onChange(preset.value)}
-                        title={preset.title}
-                    >
+                    <option key={preset.value} value={preset.value}>
                         {preset.label}
-                    </button>
+                    </option>
                 ))}
-            </div>
+            </select>
         </div>
     );
 }
@@ -120,19 +118,19 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                     </p>
 
                     <div className="sr-multiplier-grid">
-                        <MultiplierPreset
+                        <MultiplierSelect
                             label="Easy"
                             value={settings.easyMultiplier}
                             onChange={(val) => updateSetting('easyMultiplier', val)}
                             colorClass="easy"
                         />
-                        <MultiplierPreset
+                        <MultiplierSelect
                             label="Medium"
                             value={settings.mediumMultiplier}
                             onChange={(val) => updateSetting('mediumMultiplier', val)}
                             colorClass="medium"
                         />
-                        <MultiplierPreset
+                        <MultiplierSelect
                             label="Hard"
                             value={settings.hardMultiplier}
                             onChange={(val) => updateSetting('hardMultiplier', val)}
