@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { db } from '../../helpers/db';
-import { isDueToday } from '../../lib/sm2';
+import { isDueToday } from '../../lib/fsrs';
 
 export async function listProblems(_req: Request, res: Response) {
     try {
@@ -10,10 +10,11 @@ export async function listProblems(_req: Request, res: Response) {
             .orderBy('next_review_date', 'asc')
             .execute();
 
-        // Add isDueToday flag to each problem and ensure numeric types
+        // Add isDueToday flag to each problem and ensure numeric types for DECIMAL fields
         const problemsWithDueFlag = problems.map(problem => ({
             ...problem,
-            easiness_factor: Number(problem.easiness_factor),
+            stability: Number(problem.stability),
+            fsrs_difficulty: Number(problem.fsrs_difficulty),
             isDueToday: isDueToday(problem.next_review_date),
         }));
 

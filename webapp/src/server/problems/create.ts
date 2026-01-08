@@ -2,17 +2,24 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../../helpers/db';
 import type { Difficulty } from '../../helpers/schema';
+import { State, efToDifficulty, intervalToStability } from '../../lib/fsrs';
 
 const createProblemSchema = z.object({
     title: z.string().min(1).max(255),
     leetcodeUrl: z.string().url(),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     notes: z.string().optional(),
-    // Optional SM-2 parameters for import
-    easinessFactor: z.number().optional(),
+    // Optional FSRS parameters for import (or migration from SM-2/Anki)
+    stability: z.number().optional(),
+    fsrsDifficulty: z.number().optional(),
+    fsrsState: z.number().optional(),
     interval: z.number().optional(),
-    repetitions: z.number().optional(),
+    reps: z.number().optional(),
+    lapses: z.number().optional(),
     nextReviewDate: z.string().datetime().optional(), // Expect ISO string
+    // Legacy SM-2 fields for Anki import compatibility
+    easinessFactor: z.number().optional(),
+    repetitions: z.number().optional(),
 });
 
 export async function createProblem(req: Request, res: Response) {
@@ -31,7 +38,22 @@ export async function createProblem(req: Request, res: Response) {
             });
         }
 
-        const { title, leetcodeUrl, difficulty, notes, easinessFactor, interval, repetitions, nextReviewDate } = validation.data;
+        const {
+            title,
+            leetcodeUrl,
+            difficulty,
+            notes,
+            stability,
+            fsrsDifficulty,
+            fsrsState,
+            interval,
+            reps,
+            lapses,
+            nextReviewDate,
+            // Legacy fields
+            easinessFactor,
+            repetitions,
+        } = validation.data;
 
         // Check for existing problem
         const existing = await db
@@ -57,6 +79,29 @@ export async function createProblem(req: Request, res: Response) {
 
         const nextOrderNum = (maxOrderResult?.max_order ?? 0) + 1;
 
+        // Handle migration from SM-2/Anki if only legacy fields provided
+        let finalStability = stability ?? 0;
+        let finalDifficulty = fsrsDifficulty ?? 5;
+        let finalState = fsrsState ?? State.New;
+        const finalInterval = interval ?? 0;
+        let finalReps = reps ?? 0;
+        const finalLapses = lapses ?? 0;
+
+        if (easinessFactor !== undefined && stability === undefined) {
+            // Convert SM-2 ease factor to FSRS difficulty
+            finalDifficulty = efToDifficulty(easinessFactor);
+        }
+        if (interval !== undefined && stability === undefined) {
+            // Estimate stability from interval
+            finalStability = intervalToStability(interval);
+        }
+        if (repetitions !== undefined && reps === undefined) {
+            finalReps = repetitions;
+            if (repetitions > 0) {
+                finalState = State.Review;
+            }
+        }
+
         const result = await db
             .insertInto('problems')
             .values({
@@ -66,10 +111,16 @@ export async function createProblem(req: Request, res: Response) {
                 leetcode_url: leetcodeUrl,
                 difficulty: difficulty as Difficulty,
                 notes: notes || null,
-                easiness_factor: easinessFactor ?? 2.5,
-                interval: interval ?? 0,
-                repetitions: repetitions ?? 0,
+                stability: finalStability,
+                fsrs_difficulty: finalDifficulty,
+                fsrs_state: finalState,
+                interval: finalInterval,
+                reps: finalReps,
+                lapses: finalLapses,
                 next_review_date: nextReviewDate ? new Date(nextReviewDate) : new Date(),
+                // Keep legacy fields for backwards compatibility
+                easiness_factor: easinessFactor ?? null,
+                repetitions: repetitions ?? null,
             })
             .returning(['id', 'title', 'order_num', 'created_at'])
             .executeTakeFirst();

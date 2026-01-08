@@ -91,8 +91,18 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
 
     const getQualityClass = (quality: number) => {
         if (quality >= 4) return 'quality-high';
-        if (quality === 3) return 'quality-medium';
+        if (quality >= 3) return 'quality-medium';
         return 'quality-low';
+    };
+
+    const getRatingLabel = (rating: number) => {
+        switch (rating) {
+            case 1: return 'Again';
+            case 2: return 'Hard';
+            case 3: return 'Good';
+            case 4: return 'Easy';
+            default: return String(rating);
+        }
     };
 
     return (
@@ -118,8 +128,8 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
                         <StatBox label="Reviews" value={stats.totalReviews} />
                         <StatBox label="Lapses" value={stats.lapses} />
 
-                        <StatBox label="Avg Quality" value={stats.averageQuality.toFixed(2)} />
-                        <StatBox label="Easiness" value={problem.easiness_factor.toFixed(2)} />
+                        <StatBox label="Stability" value={`${(problem.stability ?? 0).toFixed(1)} days`} />
+                        <StatBox label="FSRS Difficulty" value={(problem.fsrs_difficulty ?? 5).toFixed(1)} />
                     </div>
 
                     {/* Review History */}
@@ -142,10 +152,10 @@ export function ProblemDetails({ orderNum, onClose }: ProblemDetailsProps) {
                                             <td>{formatDate(review.reviewed_at)}</td>
                                             <td>
                                                 <span className={`quality-badge ${getQualityClass(review.quality)}`}>
-                                                    {review.quality}
+                                                    {getRatingLabel(review.quality)}
                                                 </span>
                                             </td>
-                                            <td>{review.quality < 3 ? 'Lapse' : 'Review'}</td>
+                                            <td>{review.quality < 2 ? 'Lapse' : 'Review'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

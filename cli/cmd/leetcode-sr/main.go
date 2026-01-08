@@ -74,7 +74,7 @@ Commands:
   list, due        Show problems due today
   all              Show all tracked problems
   stats            Show statistics
-  review <id> <q>  Rate a problem (quality 0-5)
+  review <id> <r>  Rate a problem (1=Again, 2=Hard, 3=Good, 4=Easy)
   details <#>      Show detailed problem info
   import <source>  Import problems from source (e.g. anki)
   version          Show version
@@ -83,7 +83,7 @@ Commands:
 Examples:
   leetcode-sr login
   leetcode-sr list
-  leetcode-sr review 42 4
+  leetcode-sr review 42 3
   leetcode-sr stats
 `)
 }
@@ -276,8 +276,8 @@ func cmdStats() {
 
 func cmdReview() {
 	if len(os.Args) < 4 {
-		tui.PrintError("Usage: leetcode-sr review <problem_id> <quality>")
-		tui.PrintInfo("Quality: 0 (blackout) to 5 (perfect)")
+		tui.PrintError("Usage: leetcode-sr review <problem_id> <rating>")
+		tui.PrintInfo("Rating: 1 (Again), 2 (Hard), 3 (Good), 4 (Easy)")
 		return
 	}
 
@@ -287,9 +287,9 @@ func cmdReview() {
 		return
 	}
 
-	quality, err := strconv.Atoi(os.Args[3])
-	if err != nil || quality < 0 || quality > 5 {
-		tui.PrintError("Quality must be 0-5")
+	rating, err := strconv.Atoi(os.Args[3])
+	if err != nil || rating < 1 || rating > 4 {
+		tui.PrintError("Rating must be 1-4 (1=Again, 2=Hard, 3=Good, 4=Easy)")
 		return
 	}
 
@@ -299,12 +299,12 @@ func cmdReview() {
 		return
 	}
 
-	if err := client.ReviewProblem(problemID, quality); err != nil {
+	if err := client.ReviewProblem(problemID, rating); err != nil {
 		tui.PrintError(fmt.Sprintf("Failed to record review: %v", err))
 		return
 	}
 
-	qualityDesc := []string{"blackout", "wrong", "hard", "good", "easy", "perfect"}
-	tui.PrintSuccess(fmt.Sprintf("Reviewed problem #%d as '%s' (%d/5)",
-		problemID, qualityDesc[quality], quality))
+	ratingDesc := []string{"", "Again", "Hard", "Good", "Easy"}
+	tui.PrintSuccess(fmt.Sprintf("Reviewed problem #%d as '%s'",
+		problemID, ratingDesc[rating]))
 }

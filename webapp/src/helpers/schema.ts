@@ -34,13 +34,20 @@ export interface ProblemsTable {
     leetcode_url: string;
     difficulty: Difficulty;
     notes: string | null;
-    easiness_factor: number;
+    // FSRS fields
+    stability: number;           // Memory stability in days
+    fsrs_difficulty: number;     // FSRS difficulty (1-10)
+    fsrs_state: number;          // 0=New, 1=Learning, 2=Review, 3=Relearning
     interval: number;
-    repetitions: number;
+    reps: number;                // Successful review count
+    lapses: number;              // Failure count
     next_review_date: Date;
     last_reviewed_at: Date | null;
     created_at: Generated<Date>;
     is_starred: Generated<boolean>;
+    // Deprecated: kept for migration compatibility
+    easiness_factor: number | null;
+    repetitions: number | null;
 }
 
 export type Problem = Selectable<ProblemsTable>;

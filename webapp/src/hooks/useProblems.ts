@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import type { SM2Settings } from '../lib/settings';
+import type { FSRSSettings } from '../lib/settings';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -12,14 +12,21 @@ export interface Problem {
     leetcode_url: string;
     difficulty: 'easy' | 'medium' | 'hard';
     notes?: string;
-    easiness_factor: number;
+    // FSRS fields
+    stability: number;
+    fsrs_difficulty: number;
+    fsrs_state: number;
     interval: number;
-    repetitions: number;
+    reps: number;
+    lapses: number;
     next_review_date: string;
     last_reviewed_at?: string;
     created_at: string;
     isDueToday: boolean;
     is_starred: boolean;
+    // Deprecated (kept for compatibility)
+    easiness_factor?: number;
+    repetitions?: number;
 }
 
 export interface CreateProblemData {
@@ -84,11 +91,11 @@ export function useProblems() {
     });
 
     const reviewProblem = useMutation({
-        mutationFn: async ({ problemId, quality, settings }: { problemId: number; quality: number; settings?: SM2Settings }) => {
+        mutationFn: async ({ problemId, rating, settings }: { problemId: number; rating: number; settings?: FSRSSettings }) => {
             const res = await fetch(`${API_URL}/problems/review`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ problemId, quality, settings }),
+                body: JSON.stringify({ problemId, rating, settings }),
             });
             if (!res.ok) throw new Error('Failed to review problem');
             return res.json();

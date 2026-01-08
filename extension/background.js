@@ -83,8 +83,8 @@ async function addProblem(meta) {
     return result;
 }
 
-// Rate/review a problem
-async function reviewProblem(slug, quality) {
+// Rate/review a problem using FSRS rating (1=Again, 2=Hard, 3=Good, 4=Easy)
+async function reviewProblem(slug, rating) {
     // First, we need to find the problem by URL
     // For now, we'll fetch all problems and find by URL
     const problemsResponse = await apiRequest('/problems');
@@ -99,7 +99,7 @@ async function reviewProblem(slug, quality) {
 
     const result = await apiRequest('/problems/review', 'POST', {
         problemId: problem.id,
-        quality,
+        rating,  // FSRS rating (1-4)
     });
     return result;
 }
@@ -151,9 +151,10 @@ commands.onCommand.addListener(async (command) => {
             await addProblem(meta);
             showNotification('Added', `${meta.title} (${meta.difficulty})`);
         } else if (command.startsWith('rate-')) {
-            const quality = parseInt(command.split('-')[1], 10);
-            await reviewProblem(meta.slug, quality);
-            showNotification('Reviewed', `${meta.title} rated ${quality}`);
+            const rating = parseInt(command.split('-')[1], 10);
+            const ratingLabels = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' };
+            await reviewProblem(meta.slug, rating);
+            showNotification('Reviewed', `${meta.title} rated ${ratingLabels[rating] || rating}`);
         }
     } catch (error) {
         console.error('[LeetCode SR] Command failed:', error);

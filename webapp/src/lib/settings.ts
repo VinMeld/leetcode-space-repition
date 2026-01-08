@@ -1,26 +1,27 @@
-export interface SM2Settings {
-    easyMultiplier: number;
-    mediumMultiplier: number;
-    hardMultiplier: number;
-    sameDayRetry: boolean;
-    wrongAnswerPenalty: number;
-    minInterval: number;
-}
+import type { FSRSSettings } from './fsrs';
 
-export const defaultSettings: SM2Settings = {
-    easyMultiplier: 1.0,
-    mediumMultiplier: 1.0,
-    hardMultiplier: 1.0,
+export type { FSRSSettings };
+
+export const defaultSettings: FSRSSettings = {
+    requestRetention: 0.9,
+    maxInterval: 365,
     sameDayRetry: true,
-    wrongAnswerPenalty: 0.5,
     minInterval: 1,
 };
 
-export function loadSettings(): SM2Settings {
-    const stored = localStorage.getItem('sm2-settings');
+const STORAGE_KEY = 'fsrs-settings';
+
+export function loadSettings(): FSRSSettings {
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
         try {
-            return { ...defaultSettings, ...JSON.parse(stored) };
+            const parsed = JSON.parse(stored);
+            // Migrate from old SM-2 settings if needed
+            if ('easyMultiplier' in parsed) {
+                // Old SM-2 settings detected, return defaults
+                return defaultSettings;
+            }
+            return { ...defaultSettings, ...parsed };
         } catch {
             return defaultSettings;
         }
@@ -28,6 +29,6 @@ export function loadSettings(): SM2Settings {
     return defaultSettings;
 }
 
-export function saveSettings(settings: SM2Settings): void {
-    localStorage.setItem('sm2-settings', JSON.stringify(settings));
+export function saveSettings(settings: FSRSSettings): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }

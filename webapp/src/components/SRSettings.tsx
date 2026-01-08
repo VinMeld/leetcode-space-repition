@@ -1,45 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
 import './SRSettings.css';
 
-import { type SM2Settings, loadSettings, saveSettings, defaultSettings } from '../lib/settings';
-
-// Multiplier presets for clearer UX
-const MULTIPLIER_PRESETS = [
-    { label: '½× (Shorter)', value: 0.5 },
-    { label: '¾×', value: 0.75 },
-    { label: '1× (No change)', value: 1.0 },
-    { label: '1.5×', value: 1.5 },
-    { label: '2× (Longer)', value: 2.0 },
-];
-
-interface MultiplierSelectProps {
-    label: string;
-    value: number;
-    onChange: (value: number) => void;
-    colorClass: 'easy' | 'medium' | 'hard';
-}
-
-function MultiplierSelect({ label, value, onChange, colorClass }: MultiplierSelectProps) {
-    return (
-        <div className={`sr-multiplier-row sr-multiplier-${colorClass}`}>
-            <span className="sr-multiplier-label">{label}</span>
-            <select
-                className="sr-multiplier-select"
-                value={value}
-                onChange={(e) => onChange(parseFloat(e.target.value))}
-            >
-                {MULTIPLIER_PRESETS.map((preset) => (
-                    <option key={preset.value} value={preset.value}>
-                        {preset.label}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
-}
+import { type FSRSSettings, loadSettings, saveSettings, defaultSettings } from '../lib/settings';
 
 interface SRSettingsProps {
     onClose?: () => void;
@@ -47,7 +12,8 @@ interface SRSettingsProps {
 
 export function SRSettings({ onClose }: SRSettingsProps) {
     const { user } = useAuth();
-    const [settings, setSettings] = useState<SM2Settings>(loadSettings);
+    const [settings, setSettings] = useState<FSRSSettings>(loadSettings);
+    const previousRetentionRef = useRef(settings.requestRetention);
 
     // Password Change State
     const [currentPassword, setCurrentPassword] = useState('');
@@ -59,7 +25,7 @@ export function SRSettings({ onClose }: SRSettingsProps) {
         saveSettings(settings);
     }, [settings]);
 
-    const updateSetting = <K extends keyof SM2Settings>(key: K, value: SM2Settings[K]) => {
+    const updateSetting = <K extends keyof FSRSSettings>(key: K, value: FSRSSettings[K]) => {
         setSettings(prev => ({ ...prev, [key]: value }));
     };
 
@@ -112,41 +78,64 @@ export function SRSettings({ onClose }: SRSettingsProps) {
 
             <div className="sr-settings-content">
                 <div className="sr-settings-section">
-                    <h3>Interval Adjustment</h3>
+                    <h3>FSRS Scheduling</h3>
                     <p className="sr-settings-description">
-                        Adjust intervals for each difficulty. This will be applied when you click "Reschedule All" below.
+                        Target Memory Retention — the percentage of problems you want to remember when reviewed.
                     </p>
 
-                    <div className="sr-multiplier-grid">
-                        <MultiplierSelect
-                            label="Easy"
-                            value={settings.easyMultiplier}
-                            onChange={(val) => updateSetting('easyMultiplier', val)}
-                            colorClass="easy"
-                        />
-                        <MultiplierSelect
-                            label="Medium"
-                            value={settings.mediumMultiplier}
-                            onChange={(val) => updateSetting('mediumMultiplier', val)}
-                            colorClass="medium"
-                        />
-                        <MultiplierSelect
-                            label="Hard"
-                            value={settings.hardMultiplier}
-                            onChange={(val) => updateSetting('hardMultiplier', val)}
-                            colorClass="hard"
-                        />
+                    <div className="sr-settings-slider-group">
+                        <label>
+                            <span className="sr-settings-label">
+                                Target Retention
+                                <span className="sr-settings-value sr-retention-value">
+                                    {(settings.requestRetention * 100).toFixed(0)}%
+                                </span>
+                            </span>
+                            <input
+                                type="range"
+                                min="0.70"
+                                max="0.97"
+                                step="0.01"
+                                value={settings.requestRetention}
+                                onChange={(e) => updateSetting('requestRetention', parseFloat(e.target.value))}
+                                className="sr-slider sr-retention-slider"
+                            />
+                            <div className="sr-retention-scale">
+                                <span>70%</span>
+                                <span>Fewer reviews</span>
+                                <span>↔</span>
+                                <span>More retention</span>
+                                <span>97%</span>
+                            </div>
+                            <span className="sr-settings-hint">
+                                Higher = remember more, but review more often. Lower = fewer reviews, but forget more.
+                            </span>
+                        </label>
+
+                        <label>
+                            <span className="sr-settings-label">
+                                Maximum Interval (days)
+                                <span className="sr-settings-value">{settings.maxInterval}</span>
+                            </span>
+                            <input
+                                type="range"
+                                min="30"
+                                max="365"
+                                step="30"
+                                value={settings.maxInterval}
+                                onChange={(e) => updateSetting('maxInterval', parseInt(e.target.value))}
+                                className="sr-slider"
+                            />
+                            <span className="sr-settings-hint">
+                                Longest time between reviews (caps very stable memories)
+                            </span>
+                        </label>
                     </div>
-
-                    <p className="sr-settings-hint" style={{ marginTop: '12px' }}>
-                        <strong>Shorter</strong> = see problems more often &nbsp;|&nbsp;
-                        <strong>Longer</strong> = see problems less often
-                    </p>
 
                     <Button
                         style={{ marginTop: '16px' }}
                         onClick={async () => {
-                            if (confirm('This will recalculate intervals for ALL problems based on your current settings. Continue?')) {
+                            if (confirm('This will recalculate intervals for ALL problems based on your new target retention. Continue?')) {
                                 try {
                                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
                                     const token = localStorage.getItem('token');
@@ -156,11 +145,18 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                                             'Content-Type': 'application/json',
                                             'Authorization': `Bearer ${token}`
                                         },
-                                        body: JSON.stringify({ settings }),
+                                        body: JSON.stringify({
+                                            settings: {
+                                                requestRetention: settings.requestRetention,
+                                                maxInterval: settings.maxInterval,
+                                            },
+                                            previousRetention: previousRetentionRef.current,
+                                        }),
                                     });
                                     if (!res.ok) throw new Error('Failed to reschedule');
                                     const data = await res.json();
                                     toast.success(`Rescheduled ${data.updatedCount} problems`);
+                                    previousRetentionRef.current = settings.requestRetention;
                                     window.location.reload();
                                 } catch (error) {
                                     toast.error('Failed to reschedule');
@@ -184,30 +180,11 @@ export function SRSettings({ onClose }: SRSettingsProps) {
                         />
                         <span className="sr-toggle-slider"></span>
                         <span className="sr-toggle-label">
-                            Show again today if answered wrong (quality &lt; 3)
+                            Show again today if answered "Again"
                         </span>
                     </label>
 
                     <div className="sr-settings-slider-group">
-                        <label>
-                            <span className="sr-settings-label">
-                                Wrong Answer Penalty
-                                <span className="sr-settings-value">{(settings.wrongAnswerPenalty * 100).toFixed(0)}%</span>
-                            </span>
-                            <input
-                                type="range"
-                                min="0.2"
-                                max="1"
-                                step="0.1"
-                                value={settings.wrongAnswerPenalty}
-                                onChange={(e) => updateSetting('wrongAnswerPenalty', parseFloat(e.target.value))}
-                                className="sr-slider"
-                            />
-                            <span className="sr-settings-hint">
-                                Multiply interval by this when wrong (lower = more aggressive relearning)
-                            </span>
-                        </label>
-
                         <label>
                             <span className="sr-settings-label">
                                 Minimum Interval (days)

@@ -137,10 +137,11 @@ func (c *Client) GetStats() (*Stats, error) {
 }
 
 // ReviewProblem records a review for a problem
-func (c *Client) ReviewProblem(problemID, quality int) error {
+// rating: 1=Again, 2=Hard, 3=Good, 4=Easy (FSRS scale)
+func (c *Client) ReviewProblem(problemID, rating int) error {
 	body := map[string]int{
 		"problemId": problemID,
-		"quality":   quality,
+		"rating":    rating,
 	}
 
 	_, err := c.request("POST", "/problems/review", body)

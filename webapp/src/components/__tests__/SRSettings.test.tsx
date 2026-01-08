@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock components that SRSettings depends on
@@ -10,20 +10,16 @@ vi.mock('../../context/AuthContext', () => ({
 
 vi.mock('../../lib/settings', () => ({
     loadSettings: () => ({
-        easyMultiplier: 1.0,
-        mediumMultiplier: 1.0,
-        hardMultiplier: 1.0,
+        requestRetention: 0.9,
+        maxInterval: 365,
         sameDayRetry: true,
-        wrongAnswerPenalty: 0.5,
         minInterval: 1,
     }),
     saveSettings: vi.fn(),
     defaultSettings: {
-        easyMultiplier: 1.0,
-        mediumMultiplier: 1.0,
-        hardMultiplier: 1.0,
+        requestRetention: 0.9,
+        maxInterval: 365,
         sameDayRetry: true,
-        wrongAnswerPenalty: 0.5,
         minInterval: 1,
     },
 }));
@@ -31,52 +27,40 @@ vi.mock('../../lib/settings', () => ({
 // Import the component after mocks
 import { SRSettings } from '../SRSettings';
 
-describe('SRSettings Multiplier Selects', () => {
-    it('should render all three difficulty rows', () => {
+describe('SRSettings FSRS Settings', () => {
+    it('should render FSRS scheduling section', () => {
         render(<SRSettings />);
 
-        expect(screen.getByText('Easy')).toBeInTheDocument();
-        expect(screen.getByText('Medium')).toBeInTheDocument();
-        expect(screen.getByText('Hard')).toBeInTheDocument();
+        expect(screen.getByText('FSRS Scheduling')).toBeInTheDocument();
+        expect(screen.getByText('Target Retention')).toBeInTheDocument();
     });
 
-    it('should render select dropdowns for each row', () => {
+    it('should render retention slider and max interval slider', () => {
         render(<SRSettings />);
 
-        // Should find 3 select elements (combobox role)
-        const selects = screen.getAllByRole('combobox');
-        expect(selects).toHaveLength(3);
+        // Should find sliders (range inputs)
+        const sliders = screen.getAllByRole('slider');
+        expect(sliders.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should allow changing Easy multiplier', () => {
+    it('should display current retention value', () => {
         render(<SRSettings />);
 
-        // Find the select in the Easy row
-        const easyLabel = screen.getByText('Easy');
-        const easyRow = easyLabel.closest('.sr-multiplier-row');
-        const select = easyRow?.querySelector('select');
-        expect(select).toBeInTheDocument();
-
-        // Change value to 0.5
-        fireEvent.change(select!, { target: { value: '0.5' } });
-
-        // Value should update
-        expect(select).toHaveValue('0.5');
+        // Should show 90% (0.9 * 100)
+        expect(screen.getByText('90%')).toBeInTheDocument();
     });
 
-    it('should allow changing Hard multiplier', () => {
+    it('should render same day retry toggle', () => {
         render(<SRSettings />);
 
-        // Find the select in the Hard row
-        const hardLabel = screen.getByText('Hard');
-        const hardRow = hardLabel.closest('.sr-multiplier-row');
-        const select = hardRow?.querySelector('select');
-        expect(select).toBeInTheDocument();
+        // Find the checkbox toggle
+        const checkboxes = screen.getAllByRole('checkbox');
+        expect(checkboxes.length).toBeGreaterThanOrEqual(1);
+    });
 
-        // Change value to 2.0
-        fireEvent.change(select!, { target: { value: '2' } });
+    it('should render Reschedule All Problems button', () => {
+        render(<SRSettings />);
 
-        // Value should update
-        expect(select).toHaveValue('2');
+        expect(screen.getByText('Reschedule All Problems')).toBeInTheDocument();
     });
 });

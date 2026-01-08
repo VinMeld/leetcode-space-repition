@@ -52,29 +52,29 @@
             },
             "description": "Add current problem to tracker"
         },
-        "rate-0": {
+        "rate-1": {
             "suggested_key": {
                 "default": "Alt+2"
             },
-            "description": "Rate problem as 0 (blackout)"
+            "description": "Rate problem as Again (forgot)"
         },
-        "rate-3": {
+        "rate-2": {
             "suggested_key": {
                 "default": "Alt+3"
             },
-            "description": "Rate problem as 3 (hard)"
+            "description": "Rate problem as Hard"
         },
-        "rate-4": {
+        "rate-3": {
             "suggested_key": {
                 "default": "Alt+4"
             },
-            "description": "Rate problem as 4 (good)"
+            "description": "Rate problem as Good"
         },
-        "rate-5": {
+        "rate-4": {
             "suggested_key": {
                 "default": "Alt+5"
             },
-            "description": "Rate problem as 5 (perfect)"
+            "description": "Rate problem as Easy"
         }
     },
     "browser_specific_settings": {
