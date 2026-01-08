@@ -87,17 +87,17 @@ export const Dashboard: React.FC = () => {
         }
     };
 
-    const handleReview = async (problemId: number, quality: number) => {
+    const handleReview = async (problemId: number, rating: number) => {
         setReviewingProblem(problemId);
         try {
             const settings = loadSettings();
             await reviewProblem.mutateAsync({
                 problemId,
-                quality,
+                rating,
                 settings
             });
-            const qualityMessage = quality >= 3 ? 'Great job!' : 'Keep practicing!';
-            toast.success(`Review recorded. ${qualityMessage}`);
+            const ratingMessage = rating >= 3 ? 'Great job!' : 'Keep practicing!';
+            toast.success(`Review recorded. ${ratingMessage}`);
         } catch {
             toast.error('Failed to record review');
         } finally {

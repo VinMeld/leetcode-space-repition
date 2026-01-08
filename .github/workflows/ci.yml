@@ -157,6 +157,12 @@ jobs:
         working-directory: webapp
         run: npm run db:test:start
 
+      - name: Run Database Migrations
+        working-directory: webapp
+        run: npm run migrate
+        env:
+          DATABASE_URL: postgres://leetcode_test:test_password@localhost:5433/leetcode_sr_test
+
       - name: Run E2E tests
         working-directory: extension
         run: npm run test:e2e

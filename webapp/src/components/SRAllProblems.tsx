@@ -12,16 +12,23 @@ interface Problem {
     notes: string | null;
     next_review_date: Date;
     interval: number;
-    repetitions: number;
+    // FSRS fields
+    stability: number;
+    fsrs_difficulty: number;
+    fsrs_state: number;
+    reps: number;
+    lapses: number;
     isDueToday: boolean;
     created_at: string;
-    easiness_factor: number;
     is_starred: boolean;
+    // Deprecated (optional)
+    repetitions?: number;
+    easiness_factor?: number;
 }
 
 interface SRAllProblemsProps {
     problems: Problem[];
-    onReview: (problemId: number, quality: number) => void;
+    onReview: (problemId: number, rating: number) => void;
     onDelete: (problemId: number) => void;
     onInfo: (problem: Problem) => void;
     onStar: (problemId: number) => void;
@@ -184,22 +191,22 @@ export function SRAllProblems({ problems, onReview, onDelete, onInfo, onStar }: 
                                     <div className="sr-action-buttons">
                                         <button
                                             className="sr-action-btn sr-action-easy"
-                                            onClick={() => onReview(problem.id, 5)}
-                                            title="Easy - knew it perfectly"
+                                            onClick={() => onReview(problem.id, 4)}
+                                            title="Easy - perfect recall"
                                         >
                                             ✓
                                         </button>
                                         <button
                                             className="sr-action-btn sr-action-medium"
                                             onClick={() => onReview(problem.id, 3)}
-                                            title="Medium - got it with effort"
+                                            title="Good - correct response"
                                         >
                                             ~
                                         </button>
                                         <button
                                             className="sr-action-btn sr-action-hard"
                                             onClick={() => onReview(problem.id, 1)}
-                                            title="Hard - struggled"
+                                            title="Again - forgot"
                                         >
                                             ✗
                                         </button>

@@ -23,5 +23,10 @@ export default defineConfig({
         url: 'http://localhost:5173',
         reuseExistingServer: !process.env.CI,
         timeout: 120 * 1000,
+        env: {
+            ...process.env,
+            // Use test database URL in CI
+            DATABASE_URL: process.env.DATABASE_URL || 'postgres://leetcode_test:test_password@localhost:5433/leetcode_sr_test',
+        },
     },
 });

@@ -13,30 +13,36 @@ interface Problem {
     notes: string | null;
     next_review_date: Date;
     interval: number;
-    repetitions: number;
-    easiness_factor: number;
+    // FSRS fields
+    stability: number;
+    fsrs_difficulty: number;
+    fsrs_state: number;
+    reps: number;
+    lapses: number;
     isDueToday: boolean;
     created_at: string;
     is_starred: boolean;
+    // Deprecated (optional)
+    repetitions?: number;
+    easiness_factor?: number;
 }
 
 interface SRProblemListProps {
     problems: Problem[];
     showDueOnly?: boolean;
-    onReview: (problemId: number, quality: number) => void;
+    onReview: (problemId: number, rating: number) => void;
     onDelete: (problemId: number) => void;
     onInfo: (problem: Problem) => void;
     onStar: (problemId: number) => void;
     isReviewing?: number | null;
 }
 
+// FSRS ratings (1-4)
 const RATING_LABELS = [
-    { value: 0, label: '0', description: 'Blackout', color: 'danger' },
-    { value: 1, label: '1', description: 'Wrong', color: 'danger' },
-    { value: 2, label: '2', description: 'Hard', color: 'warning' },
-    { value: 3, label: '3', description: 'Good', color: 'warning' },
-    { value: 4, label: '4', description: 'Easy', color: 'success' },
-    { value: 5, label: '5', description: 'Perfect', color: 'success' },
+    { value: 1, label: 'Again', description: 'Forgot', color: 'danger' },
+    { value: 2, label: 'Hard', description: 'Difficult recall', color: 'warning' },
+    { value: 3, label: 'Good', description: 'Correct response', color: 'success' },
+    { value: 4, label: 'Easy', description: 'Perfect recall', color: 'success' },
 ];
 
 export const SRProblemList: React.FC<SRProblemListProps> = ({
@@ -121,7 +127,7 @@ export const SRProblemList: React.FC<SRProblemListProps> = ({
                                 </span>
                             )}
                             <span className="problem-meta-item">
-                                Rep: {problem.repetitions}
+                                Rep: {problem.reps}
                             </span>
                         </div>
                     </div>
