@@ -101,8 +101,8 @@ func TestReviewProblem(t *testing.T) {
 		if body["problemId"] != 1 {
 			t.Errorf("problemId = %d, want 1", body["problemId"])
 		}
-		if body["quality"] != 4 {
-			t.Errorf("quality = %d, want 4", body["quality"])
+		if body["rating"] != 4 {
+			t.Errorf("rating = %d, want 4", body["rating"])
 		}
 
 		w.Header().Set("Content-Type", "application/json")
